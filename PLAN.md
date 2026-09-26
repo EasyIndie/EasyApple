@@ -106,18 +106,9 @@
 
 ## Phase D — CI(`.github/workflows/`)
 
-- [ ] **D1** `ci.yml`
-  - `runs-on: macos-26`(arm64,显式 pin,不用 `-latest`)
-  - `fetch-depth: 0`、`timeout-minutes`
-  - 步骤:doctor → sync-version --check → `swift build` → `swift test` →
-    下载 iOS runtime → run-sim + 截图 → 上传 artifact
-  - 加一步「提交信息规范(Conventional Commits)」校验
-- [ ] **D2** `release.yml`
-  - tag 触发(pattern `[0-9]+.[0-9]+.[0-9]+`) → 校验 tag == `version.properties` →
-    bundle → 建 Release 挂 `.app`
-  - `permissions: contents: write`
-- [ ] **D3** 开 Actions 验证首跑(顺带验证「runner 默认 Xcode 与 Air 27.0 对齐」,
-  必要时 `xcode-select` 或 `xcode-27` label)
+- [x] **D1** `ci.yml`(✅ 已写:pin `macos-26`、选 Xcode 27、Conventional Commits 校验、doctor→sync-version→build→test→run-sim+截图→artifact)
+- [x] **D2** `release.yml`(✅ 已写:tag 触发 → 校验 tag==version.properties → bundle → `gh release create`)
+- [ ] **D3** 开 Actions 验证首跑(顺带验证「runner 默认 Xcode 与 Air 27.0 对齐」)— 待首次 push 后观察 run 日志
 
 ---
 

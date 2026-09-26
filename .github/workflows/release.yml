@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]*.[0-9]*.[0-9]*'
+
+# 建 Release 需要写权限
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 校验 tag == version.properties
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          v="$(bash tools/sync-version.sh | sed -n 's/^version=//p')"
+          echo "tag=$tag version=$v"
+          [ "$tag" = "$v" ] || { echo "tag 与 version.properties 不一致"; exit 1; }
+
+      - name: 选择 Xcode 27
+        run: |
+          shopt -s nullglob
+          candidates=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          if [ ${#candidates[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${candidates[@]}" | sort -V | tail -1)"
+            sudo xcode-select -s "$pick/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: 打包(macOS)
+        run: bash tools/bundle.sh --platform macOS
+
+      - name: 建 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          archive="EnvDemo-${GITHUB_REF_NAME}.tar.gz"
+          tar -czf "$archive" -C apps/EnvDemo/.build/bundle EnvDemo.app
+          gh release create "${GITHUB_REF_NAME}" "$archive" --generate-notes
+          # 后续签名 secrets 命名预留(本阶段零证书,不启用):
+          #   APPLE_CERT_P12_BASE64 / APPLE_CERT_PASSWORD / APPLE_ID / APPLE_TEAM_ID

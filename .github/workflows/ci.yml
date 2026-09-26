@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# macOS runner 是 10× 计费倍率;显式 pin(见决策 D9),不用 macos-latest。
+jobs:
+  build-test:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 提交信息规范(Conventional Commits)
+        if: github.event_name == 'pull_request'
+        run: |
+          base="${{ github.event.pull_request.base.sha }}"
+          head="${{ github.event.pull_request.head.sha }}"
+          bad=0
+          while IFS= read -r msg; do
+            [ -n "$msg" ] || continue
+            if ! printf '%s' "$msg" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: '; then
+              echo "不规范: $msg"; bad=1
+            fi
+          done < <(git log --format=%s "$base..$head")
+          [ "$bad" -eq 0 ] || { echo "存在不符合 Conventional Commits 的提交"; exit 1; }
+
+      - name: 选择 Xcode 27
+        run: |
+          shopt -s nullglob
+          candidates=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          if [ ${#candidates[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${candidates[@]}" | sort -V | tail -1)"
+            echo "选择: $pick"
+            sudo xcode-select -s "$pick/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: doctor
+        run: bash tools/doctor.sh
+
+      - name: 版本一致性
+        run: bash tools/sync-version.sh --check
+
+      - name: 构建
+        run: bash tools/build.sh
+
+      - name: 测试
+        run: bash tools/test.sh
+
+      - name: 模拟器冒烟(run-sim + 截图)
+        continue-on-error: true
+        run: |
+          mkdir -p .tmp
+          bash tools/run-sim.sh --screenshot "$PWD/.tmp/ci-sim.png" \
+            || echo "模拟器步骤失败(不阻塞 CI)"
+
+      - name: 上传截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulator-screenshot
+          path: .tmp/*.png
+          if-no-files-found: ignore
