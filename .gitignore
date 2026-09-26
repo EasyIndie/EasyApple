@@ -1,0 +1,58 @@
+# ---- Swift / SwiftPM ----
+.build/
+.swiftpm/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+Package.resolved.bak
+
+# ---- 构建产物 / 测试产物 ----
+*.app/
+*.ipa/
+*.xcarchive/
+*.xcresult/
+*.dSYM/
+*.o
+*.dylib
+*.framework/
+
+# ---- IDE / 编辑器 ----
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+._*
+
+# ---- 本机私有配置(不入库)----
+# 远程 Mac 的 SSH 别名、模拟器名等,模板见 tools/host.env.example
+tools/host.env
+
+# ---- 签名凭据(绝对不能入库)----
+# 当前阶段只用模拟器、零证书,但提前拦好,避免将来误提交。
+*.p12
+*.pfx
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+# gen 脚本导出的自包含凭据包(base64,等同私钥)
+*.signing-bundle
+*signing-bundle*.b64
+
+# ---- 发版产物 ----
+# tools/release.sh 的输出,属于 GitHub Release 附件,不入库
+dist/
+
+# ---- 脚本临时目录 ----
+.tmp/
+
+# ---- 本地智能体数据 ----
+# 工作日志 / 记忆等本机数据,且可能含真实设备地址,不入库
+.workbuddy/
