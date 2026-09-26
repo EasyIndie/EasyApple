@@ -69,7 +69,7 @@ jobs:
           bash tools/run-sim.sh --screenshot "$PWD/.tmp/ci-sim.png" \
             || echo "模拟器步骤失败(不阻塞 CI)"
           bash tools/ui-assert.sh --input "$PWD/.tmp/ci-sim.png" \
-            --contains "arm64" --contains "模拟器" \
+            --contains "arm64" --contains "GB" \
             || echo "文本断言失败(不阻塞 CI)"
 
       - name: 上传截图

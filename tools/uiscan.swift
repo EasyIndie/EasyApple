@@ -55,15 +55,31 @@ guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, 
   fail("无法读取图片: \(path)", 3)
 }
 
-let request = VNRecognizeTextRequest()
-request.recognitionLevel = fast ? .fast : .accurate
-request.usesLanguageCorrection = !fast
-request.recognitionLanguages = langs
-
-do {
+// 识别(带语言回退:请求语言 → en-US → 系统默认)。CI runner 上可能没有 zh 模型,会抛 unknownError。
+func recognize(languages: [String]?) throws -> [VNRecognizedTextObservation] {
+  let request = VNRecognizeTextRequest()
+  request.recognitionLevel = fast ? .fast : .accurate
+  request.usesLanguageCorrection = !fast
+  if let languages { request.recognitionLanguages = languages }
   try VNImageRequestHandler(cgImage: cg, options: [:]).perform([request])
+  return request.results ?? []
+}
+
+var observations: [VNRecognizedTextObservation]
+do {
+  observations = try recognize(languages: langs)
 } catch {
-  fail("OCR 失败: \(error)", 4)
+  FileHandle.standardError.write(Data("uiscan: 语言 \(langs) 不可用(\(error));回退 en-US\n".utf8))
+  do {
+    observations = try recognize(languages: ["en-US"])
+  } catch {
+    FileHandle.standardError.write(Data("uiscan: en-US 不可用(\(error));回退系统默认\n".utf8))
+    do {
+      observations = try recognize(languages: nil)
+    } catch {
+      fail("OCR 失败: \(error)", 4)
+    }
+  }
 }
 
 struct Line: Codable {
@@ -76,7 +92,7 @@ struct Line: Codable {
 }
 
 // Vision 的 boundingBox 原点在左下;这里转成「原点左上」的归一化坐标
-let lines: [Line] = (request.results ?? [])
+let lines: [Line] = observations
   .compactMap { obs -> Line? in
     guard let c = obs.topCandidates(1).first, c.confidence >= minConfidence else { return nil }
     let b = obs.boundingBox
