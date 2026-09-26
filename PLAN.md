@@ -47,13 +47,15 @@
 - [x] **P1.3** 下载 iOS 模拟器 runtime:✅ `xcodes runtimes install "iOS 27.0"`(iOS 27.0 / 24A434 已装)
 - [ ] **P1.4** 写 `tools/doctor.sh`(环境自检)
 - [ ] **P1.5** 写 `tools/bootstrap.sh`(引导安装:装 xcodes → Xcode 27.0 → iOS runtime;xcodes 仅装机,不进构建链路)
-- [ ] **P1.6** 写 `tools/bundle.sh` 原型:拼 `App.app/Contents/{MacOS,Info.plist,Resources}`
-  + `codesign --force --sign -` + `simctl install/launch`
-- [ ] **P1.7** 实测 iOS 模拟器 bundle 的最小必需 Info.plist 键,沉淀进
-  `docs/04-packaging-native.md`(执行期创建)
+- [x] **P1.6** 写 `tools/bundle.sh` 原型:拼 `App.app` + `codesign --force --sign -` + `simctl install/launch` → ✅ macOS 与 iOS 模拟器都验证通过
+- [x] **P1.7** 实测 iOS 模拟器 bundle 的最小必需 Info.plist 键 → ✅ 已跑通(见下)
 
 > 已确认(2026-09-26):`xcodes list` 显示 `27.0 (27A266a) [Apple Silicon]`(与 D12 一致;27.x 无 Intel 构建,印证 D13)。
 > ⚠️ 踩坑:`brew install xcodesorg/made/xcodes` 走源码构建(git clone SPM 依赖),在受管沙箱里 getcwd 报 `Operation not permitted`;改直下 release 二进制(`xcodes.zip` → `/opt/homebrew/bin/xcodes`)。
+>
+> ✅ **原生打包已验证(2026-09-26)**:macOS + iOS 模拟器均跑通(iOS app 在 iPhone 17 模拟器 launch 成功、进程稳定)。
+> iOS 模拟器 bundle 最小 Info.plist 键:CFBundleIdentifier / CFBundleName / CFBundleExecutable / CFBundlePackageType(APPL)/ CFBundleShortVersionString / CFBundleVersion / MinimumOSVersion(17.0)/ UIDeviceFamily(1,2)/ UILaunchScreen(空 dict)。
+> iOS 构建命令:`xcrun swift build -c release --triple arm64-apple-ios-simulator --sdk $(xcrun --sdk iphonesimulator --show-sdk-path)`;产物在 `.build/out/Products/Release-iphonesimulator/`。
 
 ---
 
@@ -85,14 +87,14 @@
 
 > 约定:所有脚本 source `tools/_common.sh`;平台固定 macOS,无需跨平台分支。
 
-- [ ] **C1** `tools/_common.sh`(定位 `swift`/`xcrun`/`xcodebuild`;`die`/`note`/`skip` 统一输出)
+- [x] **C1** `tools/_common.sh`(REPO_ROOT / DEVELOPER_DIR / `die`·`note`·`ok`·`skip` / 版本读取)
 - [ ] **C2** `tools/doctor.sh` —— 环境自检(同 P1.4)
 - [ ] **C3** `tools/bootstrap.sh` —— 引导安装 Xcode + iOS runtime(幂等)
 - [ ] **C4** `tools/sync-version.sh` —— 从 `version.properties` 写 `Info.plist` 的
   `CFBundleShortVersionString` / `CFBundleVersion`;`--check` 只校验
 - [ ] **C5** `tools/build.sh` —— `swift build`(先 `sync-version`)
 - [ ] **C6** `tools/test.sh` —— `swift test`
-- [ ] **C7** `tools/bundle.sh` —— 原生打包(拼 `.app` + `codesign -s -` + `simctl install`)
+- [x] **C7** `tools/bundle.sh` —— 原生打包(✅ 已实现:macOS + iOSSimulator,读 version.properties 填版本,ad-hoc 签名)
 - [ ] **C8** `tools/run-sim.sh` —— `simctl boot` + `install` + `launch`
 - [ ] **C9** `tools/sim.sh` —— 封装 `simctl`;含 `xcodebuild -downloadPlatform iOS`
 - [ ] **C10** `tools/ui-dump.sh` —— 截图(`simctl io <device> screenshot`);文本树后置

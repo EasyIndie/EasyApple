@@ -103,12 +103,13 @@ public enum EnvironmentProber {
             let f = screen.frame
             return (Int(f.width), Int(f.height))
         }
-        #endif
-        #if canImport(UIKit)
+        return (0, 0)
+        #elseif canImport(UIKit)
         let bounds = UIScreen.main.bounds
         return (Int(bounds.width), Int(bounds.height))
-        #endif
+        #else
         return (0, 0)
+        #endif
     }
 
     static func gpuName() -> String {
