@@ -30,11 +30,16 @@
 - [x] **P0.1** `sw_vers` → **macOS 27.0**(build `26A428`,Golden Gate,已发布)
 - [x] **P0.2** 芯片 → **Apple Silicon M1**(arm64,`T8103`)
 - [x] **P0.3** Homebrew → ✅ 已装(`/opt/homebrew/bin/brew`)
-- [x] **P0.4** Command Line Tools → ✅ 已装(`/Library/Developer/CommandLineTools`)
-- [ ] **P0.5** `xcodebuild -version` → 预期 Xcode 27.0(当前**未装**)
-- [ ] **P0.6** `xcrun --sdk iphonesimulator --show-sdk-path` → 装完 Xcode 后验证 iOS SDK 在
-- [ ] **P0.7** `xcrun simctl list runtimes` → 记录已安装的模拟器 runtime
-- [ ] **P0.8** `swift --version` → 预期 Swift 6.4
+- [x] **P0.4** Command Line Tools → ✅ 已装(`/Library/Developer/CommandLineTools`,且是当前 active dev dir)
+- [x] **P0.5** `xcodebuild -version` → ❌ 报错「requires Xcode, but active developer directory is a command line tools instance」→ **完整 Xcode 未装**
+- [x] **P0.6** `xcrun --sdk iphonesimulator --show-sdk-path` → ❌ SDK 不存在 → **证实 CLT 拿不到 iOS SDK**(research/01 §5)
+- [x] **P0.7** `xcrun simctl list runtimes` → ❌ 「unable to find utility simctl」→ 无完整 Xcode 则无 simctl
+- [x] **P0.8** `swift --version` → ⚠️ `swift` 指向 swiftly 的 shim,但其 Swift 6.3.3 toolchain **缺失** → 装 Xcode 后需处理(见下)
+
+> ⚠️ **swiftly 坑(已发现)**:`which swift` = `/Users/joker/.swiftly/bin/swift`(swiftly 的 shim),
+> 但 `~/Library/Developer/Toolchains/` 为空,导致 `swift --version` 报「Swift 6.3.3 could not be located」。
+> Phase 1 装完 Xcode 后,要让 `swift` 走 Xcode 自带 Swift 6.4(用 `xcrun swift` 或调整 PATH,
+> 必要时 `swiftly uninstall Swift 6.3.3`)。
 
 ---
 
