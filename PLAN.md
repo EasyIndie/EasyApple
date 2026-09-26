@@ -45,8 +45,8 @@
 - [x] **P1.1** 装 `xcodes`(bootstrap 工具,D14)→ ✅ 已装 **2.1.0**(直下 release 二进制;brew 源码构建被沙箱拦)→ ✅ `xcodes install 27.0`(Xcode 27.0 / 27A266a)
 - [x] **P1.2** `sudo xcodebuild -license accept` + `xcodes select 27.0`(✅ `xcode-select -p` 已指向 Xcode)
 - [x] **P1.3** 下载 iOS 模拟器 runtime:✅ `xcodes runtimes install "iOS 27.0"`(iOS 27.0 / 24A434 已装)
-- [ ] **P1.4** 写 `tools/doctor.sh`(环境自检)
-- [ ] **P1.5** 写 `tools/bootstrap.sh`(引导安装:装 xcodes → Xcode 27.0 → iOS runtime;xcodes 仅装机,不进构建链路)
+- [x] **P1.4** 写 `tools/doctor.sh`(环境自检)→ ✅ 由 C2 完成
+- [x] **P1.5** 写 `tools/bootstrap.sh`(装 xcodes → Xcode 27.0 → iOS runtime)→ ✅ 由 C3 完成
 - [x] **P1.6** 写 `tools/bundle.sh` 原型:拼 `App.app` + `codesign --force --sign -` + `simctl install/launch` → ✅ macOS 与 iOS 模拟器都验证通过
 - [x] **P1.7** 实测 iOS 模拟器 bundle 的最小必需 Info.plist 键 → ✅ 已跑通(见下)
 
@@ -78,7 +78,7 @@
 - [x] **B3** 写 `Tests/EnvDemoCoreTests`(3 个用例:formatBytes / formatAsText 字段 / 屏幕为零时省略)
 - [x] **B4** 写 `EnvDemo` SwiftUI App(`EnvDemoApp.swift` + `ContentView.swift`)
   - 刻意保守:不用新 SwiftUI API、不用宏、不用 Observation
-- [ ] **B5** 手写 `apps/EnvDemo/Info.plist`(版本字段由 `tools/sync-version.sh` 生成)→ **并入 Phase C `bundle.sh` 一起做**
+- [x] **B5** 手写 `apps/EnvDemo/Info.plist` → ✅ 由 `tools/bundle.sh` 生成(最小键见 [docs/04](docs/04-packaging-native.md))
 - [x] **B6** 在 Air 上首跑:✅ `swift build`(11.79s)+ `swift test`(**3 通过 0 失败**)全绿
 
 ---
