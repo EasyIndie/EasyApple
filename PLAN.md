@@ -69,17 +69,15 @@
 
 ## Phase B — SwiftPM 示例工程(`apps/EnvDemo`)
 
-- [ ] **B1** `apps/EnvDemo/Package.swift`,`swift-tools-version: 6.0`
+- [x] **B1** `apps/EnvDemo/Package.swift`,`swift-tools-version: 6.0`
   - 两个 product:`EnvDemoCore`(library,不 import SwiftUI)+ `EnvDemo`(executable `@main`)
-  - `platforms: [.macOS(.v14), .iOS(.v17)]`
-- [ ] **B2** 写 `EnvDemoCore`(纯逻辑环境探测:型号 / OS / 是否模拟器 / 架构 /
-  屏幕 / 内存 / 存储 / Metal GPU;产出 `EnvironmentReport` + `format(asText:)`)
-- [ ] **B3** 写 `Tests/EnvDemoCoreTests`(只测可注入的纯逻辑)
-- [ ] **B4** 写 `EnvDemo` SwiftUI App(`EnvDemoApp.swift` + `ContentView.swift`)
+  - `platforms: [.macOS(.v14), .iOS(.v17)]`;`swiftLanguageModes: [.v5]`(规避严格并发摩擦)
+- [x] **B2** 写 `EnvDemoCore`(环境探测:型号 / OS / 是否模拟器 / 架构 / 屏幕 / 内存 / 存储 / Metal GPU;产出 `EnvironmentReport` + `formatAsText()` + `formatBytes()`)
+- [x] **B3** 写 `Tests/EnvDemoCoreTests`(3 个用例:formatBytes / formatAsText 字段 / 屏幕为零时省略)
+- [x] **B4** 写 `EnvDemo` SwiftUI App(`EnvDemoApp.swift` + `ContentView.swift`)
   - 刻意保守:不用新 SwiftUI API、不用宏、不用 Observation
-- [ ] **B5** 手写 `apps/EnvDemo/Info.plist`(版本字段由 `tools/sync-version.sh` 生成)
-- [ ] **B6** 在 Air 上首跑:`swift build` + `swift test`,修到全绿
-  - 验收:`swift test` 全绿
+- [ ] **B5** 手写 `apps/EnvDemo/Info.plist`(版本字段由 `tools/sync-version.sh` 生成)→ **并入 Phase C `bundle.sh` 一起做**
+- [x] **B6** 在 Air 上首跑:✅ `swift build`(11.79s)+ `swift test`(**3 通过 0 失败**)全绿
 
 ---
 
