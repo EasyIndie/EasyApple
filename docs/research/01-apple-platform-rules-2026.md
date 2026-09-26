@@ -1,8 +1,10 @@
 # 01 — Apple 平台开发规则(2026-09 快照)
 
-> **状态:规划期调研,未在真机验证。** 本文所有版本号/日期都来自公开资料,权威性分级见每节
-> 「来源」。**在 Air 上请以本机 `xcodebuild -version` / `xcrun` 的实际输出为准**
-> (见文末「怎么复核」)。
+> **状态:规划期调研,部分已在 Air 核实(2026-09-26)。** 本文所有版本号/日期都来自公开资料,权威性分级见每节
+> 「来源」。**以本机 `xcodebuild -version` / `xcrun` 的实际输出为准**(见文末「怎么复核」)。
+>
+> 已核实:macOS 27.0(build `26A428`)已在 M1 Air 上运行,证实「M1 支持 macOS 27」。
+> `xcodebuild -version` / `simctl list runtimes` 待 Xcode 装完回填。
 
 ## 1. 当前版本矩阵
 
@@ -10,7 +12,7 @@
 |---|---|---|
 | **Xcode** | **27.0**(2026-09-14 发布,build `27A266a`) | 含 iOS 27.0 / macOS 27.0 / watchOS 27.0 / tvOS 27.0 / visionOS 27.0 SDK |
 | 上一稳定大版本 | Xcode 26.x(26.0 = 2025-09-15;26.6 = 2026-06-25) | 26.x 仍在维护 |
-| **macOS** | **26 Tahoe**(2025-09-15);macOS 27 在 beta | Tahoe 是**最后一个支持 Intel Mac 的 macOS 大版本** |
+| **macOS** | **27.0 Golden Gate**(已发布,build `26A428`);26 Tahoe 是**最后一个支持 Intel 的 macOS 大版本** | macOS 27 起 Apple Silicon only |
 | **Swift** | **6.4**(swift.org 已发布 `swift-6.4.0-RELEASE`) | 各平台 toolchain(Windows/Linux/Android)同步 |
 | **App Store 构建要求** | 必须 **Xcode 26 或更高** + 对应 iOS SDK | 见 §3 |
 | App Review 指南最近更新 | **2026-06-08** | 见 §4 |
@@ -107,4 +109,4 @@ swift --version                  # Swift 版本(Swift 6.4 直接读这里的输�
 xcodebuild -showsdks             # 所有可用 SDK
 ```
 
-把输出贴回 `HANDOFF.md` 的「实测结果」区,或修正本文件的 §1/§2 表格。
+把输出写回本文件的 §1/§2 表格,或 `PLAN.md` 的 Phase 0。

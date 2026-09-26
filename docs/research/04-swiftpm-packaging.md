@@ -1,6 +1,9 @@
 # 04 — SwiftPM 打不出包,怎么补?(2026-09 快照)
 
 > **状态:规划期调研,未在真机验证。**
+> ⚠️ 本仓库已定 **用自写原生打包脚本,不用 swift-bundler**(见 [`../00-decisions.md`](../00-decisions.md) D5),
+> 本文的 swift-bundler 内容仅作备选对照。
+>
 > 已确定工程真相用 **SwiftPM**(见 [`../00-decisions.md`](../00-decisions.md) D4),
 > 本文回答:SwiftPM 只能产出可执行文件/库,不会做 `.app` 打包
 > (`Info.plist`、图标、资源 bundle、ad-hoc 签名、`simctl install`)——这块由谁补。
@@ -9,9 +12,9 @@
 
 | 方案 | 做法 | 成熟度 | 支持 iOS 模拟器 | 支持全平台 | 本仓库定位 |
 |---|---|---|---|---|---|
-| **[swift-bundler](https://github.com/moreSwift/swift-bundler)** | 纯 SwiftPM,`Bundler.toml` 配置 | ~515★;**无稳定 release**(最新正式版 v2.0.4 / 2022),日常在 `main`(最近提交 2026-09-17,已适配 Swift 6.4) | ✅ `swift bundler run --platform iOSSimulator` | macOS/iOS/tvOS/visionOS **+ Linux/Windows/Android**;**不支持 watchOS** | **主链路** |
-| **XcodeGen 薄壳** | 代码留在 SwiftPM;`project.yml` 生成薄 app target 依赖本地 package,`xcodebuild` 打包 | ~8.8k★,活跃(2026-09 有提交) | ✅(经 `xcodebuild`) | ✅ 全部 Apple 平台 | **逃生舱** |
-| 自写 bundling 脚本 | 自己拼 `.app` + `Info.plist` + `codesign -s -` + `simctl install` | 完全可控,~150 行 | ✅ | 需自己维护 | 只作**知识沉淀**,不做主链路 |
+| **[swift-bundler](https://github.com/moreSwift/swift-bundler)** | 纯 SwiftPM,`Bundler.toml` 配置 | ~515★;**无稳定 release**(最新正式版 v2.0.4 / 2022),日常在 `main`(最近提交 2026-09-17,已适配 Swift 6.4) | ✅ `swift bundler run --platform iOSSimulator` | macOS/iOS/tvOS/visionOS **+ Linux/Windows/Android**;**不支持 watchOS** | **已弃用**(改原生脚本,D5) |
+| **XcodeGen 薄壳** | 代码留在 SwiftPM;`project.yml` 生成薄 app target 依赖本地 package,`xcodebuild` 打包 | ~8.8k★,活跃(2026-09 有提交) | ✅(经 `xcodebuild`) | ✅ 全部 Apple 平台 | **备选**(首期不做) |
+| 自写 bundling 脚本 | 自己拼 `.app` + `Info.plist` + `codesign -s -` + `simctl install` | 完全可控,~150 行 | ✅ | 需自己维护 | **主链路**(已定,D5) |
 | **[xtool](https://github.com/xtool-org/xtool)** | 跨平台 Xcode 替代,从 SwiftPM 构建 iOS app 并部署 | ~5.5k★,活跃 | ❌(面向**真机**) | Linux/WSL/macOS | 将来做「无 Mac 出设备包」时用 |
 
 ## 2. 为什么选 swift-bundler 作主链路
@@ -67,7 +70,7 @@ CFBundleShortVersionString = "$(VERSION)"
 覆盖 swift-bundler 做不到的事,或需要完全用 Xcode 构建系统时。
 
 ```yaml
-# apps/EnvDemo/project.yml(仅示意;真实内容在 PLAN.md Phase B6 落地)
+# apps/EnvDemo/project.yml(仅示意;本仓库首期不用 XcodeGen 逃生舱)
 name: EnvDemo
 options:
   bundleIdPrefix: com.easyapple

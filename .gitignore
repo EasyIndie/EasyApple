@@ -30,10 +30,6 @@ Thumbs.db
 desktop.ini
 ._*
 
-# ---- 本机私有配置(不入库)----
-# 远程 Mac 的 SSH 别名、模拟器名等,模板见 tools/host.env.example
-tools/host.env
-
 # ---- 签名凭据(绝对不能入库)----
 # 当前阶段只用模拟器、零证书,但提前拦好,避免将来误提交。
 *.p12
