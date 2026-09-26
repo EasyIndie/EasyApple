@@ -60,12 +60,10 @@
 ## Phase A — 仓库骨架
 
 - [x] **A1** `git init -b main` + `git remote add origin https://github.com/EasyIndie/EasyApple.git`(已落地)
-- [ ] **A2** 建目录:`apps/ tools/ .github/workflows/`(空目录 `.gitkeep` 占位)
+- [x] **A2** 建目录:`apps/ tools/ .github/workflows/`(✅ 已建,`.gitkeep` 占位)
 - [x] **A3** `.gitignore`(已预置 `.build/`、`*.xcodeproj`、`*.p12`、`*.mobileprovision`、`.tmp/` 等)
-- [~] **A4** `LICENSE`(✅)+ `README.md`(✅)+ `CHANGELOG.md`(待建)
-- [ ] **A5** 写 `version.properties`(严格 SemVer 契约注释 + 版本历史区,首版 `0.0.1`)
-  - 验收:注释写清 `CFBundleShortVersionString=version`、
-    `CFBundleVersion=MAJOR*10000+MINOR*100+PATCH`、仓库内禁止版本字面量
+- [x] **A4** `LICENSE`(✅)+ `README.md`(✅)+ `CHANGELOG.md`(✅)
+- [x] **A5** 写 `version.properties`(✅ 首版 `0.0.1`,契约注释含 `CFBundleShortVersionString`/`CFBundleVersion` 映射)
 
 ---
 
