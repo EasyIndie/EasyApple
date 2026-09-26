@@ -9,7 +9,7 @@ on:
 # macOS runner 是 10× 计费倍率;显式 pin(见决策 D9),不用 macos-latest。
 jobs:
   build-test:
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
