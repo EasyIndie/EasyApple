@@ -47,6 +47,7 @@ fi
 
 git -C "$REPO_ROOT" add version.properties CHANGELOG.md
 git -C "$REPO_ROOT" commit -m "chore(release): $NEXT"
-git -C "$REPO_ROOT" tag "$NEXT"
+# 必须用附注标签(-a):轻量标签不被 `git push --follow-tags` 推送,release.yml 不会触发
+git -C "$REPO_ROOT" tag -a "$NEXT" -m "Release $NEXT"
 ok "已提交并打 tag: $NEXT"
 note "下一步:git push --follow-tags(触发 release.yml)"

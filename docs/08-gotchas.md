@@ -53,3 +53,10 @@
 ## 9. 只有 CLT 没完整 Xcode 时
 
 - `xcodebuild` / `xcrun simctl` / `--sdk iphonesimulator` 全不可用。见 [01](01-headless-apple-build.md) §1。
+
+## 10. `git push --follow-tags` 推不动轻量标签
+
+- **症状**:`git tag 0.1.0` 后 `git push --follow-tags`,远端无 tag,`release.yml` 不触发。
+- **原因**:`--follow-tags` **只推附注标签(annotated)**,不推轻量标签(lightweight)。`git tag <名>` 默认建的是轻量标签。
+- **校验**:`git cat-file -t <tag>` → `commit` 是轻量,`tag` 才是附注;`git ls-remote --tags origin` 看远端有没有。
+- **解法**:`git tag -a <名> -m "Release <名>"`;或直接 `git push origin <tag>`。`tools/release.sh` 已改为 `-a`。
