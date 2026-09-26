@@ -62,12 +62,15 @@ jobs:
       - name: 测试
         run: bash tools/test.sh
 
-      - name: 模拟器冒烟(run-sim + 截图)
+      - name: 模拟器冒烟(run-sim + 截图 + 文本断言)
         continue-on-error: true
         run: |
           mkdir -p .tmp
           bash tools/run-sim.sh --screenshot "$PWD/.tmp/ci-sim.png" \
             || echo "模拟器步骤失败(不阻塞 CI)"
+          bash tools/ui-assert.sh --input "$PWD/.tmp/ci-sim.png" \
+            --contains "arm64" --contains "模拟器" \
+            || echo "文本断言失败(不阻塞 CI)"
 
       - name: 上传截图
         if: always()

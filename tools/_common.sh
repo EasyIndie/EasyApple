@@ -39,3 +39,25 @@ bundle_version_from_props() {
   patch="$(printf '%s' "$v" | cut -d. -f3)"
   printf '%d' "$(( major*10000 + minor*100 + patch ))"
 }
+
+# 按设备名解析 UDID(取第一个匹配的 available 设备)
+simctl_udid() {
+  local name="$1" udid
+  udid="$(xcrun simctl list devices available | grep -F "$name (" | head -1 \
+    | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)"
+  [ -n "$udid" ] || die "找不到模拟器设备: $name(用 tools/sim.sh list 查看)"
+  printf '%s' "$udid"
+}
+
+# 编译并缓存原生 OCR 工具 tools/uiscan.swift(源码更新时自动重编)。
+# 只向 stdout 输出二进制路径;日志走 stderr(以便在 $(...) 里安全使用)。
+ensure_uiscan() {
+  local src="$REPO_ROOT/tools/uiscan.swift"
+  local bin="$REPO_ROOT/.tmp/tools-cache/uiscan"
+  if [ ! -x "$bin" ] || [ "$src" -nt "$bin" ]; then
+    mkdir -p "$(dirname "$bin")"
+    note "编译 uiscan(原生 OCR)…" >&2
+    xcrun swiftc -O "$src" -o "$bin" >&2 || die "uiscan 编译失败"
+  fi
+  printf '%s' "$bin"
+}

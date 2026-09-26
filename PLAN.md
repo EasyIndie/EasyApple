@@ -158,3 +158,43 @@
 | 2026-09-26 | Phase 0–C 完成:装 Xcode 27.0、EnvDemo 工程、原生打包全链路验证 | 执行期 |
 | 2026-09-26 | Phase D 完成:CI/release 用 `xcode-27` label + Xcode 27.0 | 对齐 Air(实测) |
 | 2026-09-26 | Phase E–F 完成:执行期文档 01–08 + 静态自检 + verify-all 6/6 | — |
+| 2026-09-27 | 发布首个版本 0.1.0;修 release.sh 轻量标签 bug | 验证 release 流水线 |
+| 2026-09-27 | 新增文本级验收(D15):原生 OCR `ui-scan`/`ui-assert`;verify-all 7 步 | 无障碍树路线与无头冲突 |
+
+---
+
+## 附录 C — 后置任务(未做,按需再开)
+
+### C-A 可做——有明确触发条件(需业务需求才值得开)
+
+| # | 任务 | 出处 | 为什么后置 | 要做需要 |
+|---|---|---|---|---|
+| A1 | 真机签名 + 装机运行 | [D6](docs/00-decisions.md) | 模拟器不校验签名,零门槛 | 免费 Apple ID(7 天 profile)或付费账号 |
+| A2 | 分发:TestFlight / App Store | D6 | 同上,且流程重 | 付费账号 + App Store Connect + 公证 |
+| A3 | macOS 产物公证(notarization) | D6 引申 | 现产物是 ad-hoc 签名,发别人会被 Gatekeeper 拦 | Developer ID 证书 + `notarytool` |
+| A4 | 精确无障碍树 | [D15](docs/00-decisions.md)、[docs/06](docs/06-ui-acceptance.md) | 宿主 AX 与无头冲突;XCUITest 需 xcodeproj | XCUITest + 一次性生成(不入库)`.xcodeproj`,或引入 idb |
+| A5 | 交互断言(tap/输入) | [docs/06](docs/06-ui-acceptance.md) §5 | `simctl` 无 tap | 同 A4 |
+
+### C-B 逃生舱(需要时才引入)
+
+| # | 任务 | 出处 | 触发条件 |
+|---|---|---|---|
+| B1 | XcodeGen 生成 `.xcodeproj` | [D4/D5](docs/00-decisions.md) | 做 watchOS / App 扩展 / Widget / 多 target / XCUITest 时 |
+| B2 | 多 scheme / 多构建配置 | SwiftPM 现状 | 多产品线时 |
+
+### C-C 实质已否决(不建议做)
+
+| # | 任务 | 出处 | 否决理由 |
+|---|---|---|---|
+| C1 | 支持 Intel Mac / universal 包 | [D13](docs/00-decisions.md) | Xcode 27 / macOS 27 已无 Intel 构建 |
+| C2 | 无 Mac 出真机设备包(Theos / xtool) | [docs/07](docs/07-cross-platform-and-no-mac.md) §5 | 要下 `Xcode.xip` 提 SDK,只面向真机、无模拟器 |
+| C3 | 非 macOS 上开发 / 模拟器 | [research/02](docs/research/02-cross-platform-dev.md)、[03](docs/research/03-simulator-cross-platform.md) | 原理不可行 |
+| C4 | 非 Apple 硬件 macOS VM | PLAN 附录 A | 违反 EULA |
+| C5 | 第三方打包工具(swift-bundler / idb) | [D5](docs/00-decisions.md)/[D7](docs/00-decisions.md) | 与「只用原生工具」冲突 |
+
+### C-D 流程性(不是功能任务)
+
+| # | 事项 | 出处 |
+|---|---|---|
+| D1 | runner OS 升级(换 OS 单独开一次) | [D9](docs/00-decisions.md) |
+| D2 | Xcode 降级到 26.6(fallback,仅 27 出问题时) | [D12](docs/00-decisions.md) |

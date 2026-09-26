@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/verify-all.sh — 总验收:doctor → sync-version → build → test → run-sim → ui-dump
+# tools/verify-all.sh — 总验收:doctor → sync-version → build → test → run-sim → ui-dump → ui-assert
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
@@ -16,6 +16,7 @@ step "build"        bash "$REPO_ROOT/tools/build.sh"
 step "test"         bash "$REPO_ROOT/tools/test.sh"
 step "run-sim"      bash "$REPO_ROOT/tools/run-sim.sh"
 step "ui-dump"      bash "$REPO_ROOT/tools/ui-dump.sh"
+step "ui-assert"    bash "$REPO_ROOT/tools/ui-assert.sh" --contains "arm64" --contains "模拟器"
 
 echo
 echo "== 通过 $PASS / 失败 $FAIL =="

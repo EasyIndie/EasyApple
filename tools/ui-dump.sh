@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/ui-dump.sh — UI 验收(截图为先;文本树后置,见决策 D7)
+# tools/ui-dump.sh — UI 验收:截图(截图为先,见决策 D7;文本级用 ui-scan/ui-assert)
 #   tools/ui-dump.sh [--device "iPhone 17"] [--out /path.png]
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
@@ -24,4 +24,4 @@ UDID="$(xcrun simctl list devices available | grep -F "$DEVICE (" | head -1 \
 
 xcrun simctl io "$UDID" screenshot "$OUT" >/dev/null
 ok "截图: $OUT"
-note "文本树验收后置(决策 D7);当前以截图为准"
+note "文本验收用 tools/ui-scan.sh(OCR 文本) / tools/ui-assert.sh(断言);路线取舍见 docs/06"
