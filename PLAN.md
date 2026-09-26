@@ -45,11 +45,11 @@
 
 ## Phase 1 — 工具链安装 + 原生打包原型
 
-- [ ] **P1.1** 安装 **Xcode 27.0**(App Store 或 developer.apple.com 直下 `.xip`;记录用哪种)
-- [ ] **P1.2** `sudo xcodebuild -license accept` + `xcode-select -s /Applications/Xcode.app/Contents/Developer`
-- [ ] **P1.3** 下载 iOS 模拟器 runtime:`xcodebuild -downloadPlatform iOS`
+- [ ] **P1.1** 装 `xcodes`(bootstrap 工具,D14)→ `brew install xcodesorg/made/xcodes` → `xcodes install 27.0`
+- [ ] **P1.2** `sudo xcodebuild -license accept` + `xcodes select 27.0`
+- [ ] **P1.3** 下载 iOS 模拟器 runtime:`xcodes runtimes install "iOS 27.0"`(或 `xcodebuild -downloadPlatform iOS`)
 - [ ] **P1.4** 写 `tools/doctor.sh`(环境自检)
-- [ ] **P1.5** 写 `tools/bootstrap.sh`(引导安装,零第三方构建工具)
+- [ ] **P1.5** 写 `tools/bootstrap.sh`(引导安装:装 xcodes → Xcode 27.0 → iOS runtime;xcodes 仅装机,不进构建链路)
 - [ ] **P1.6** 写 `tools/bundle.sh` 原型:拼 `App.app/Contents/{MacOS,Info.plist,Resources}`
   + `codesign --force --sign -` + `simctl install/launch`
 - [ ] **P1.7** 实测 iOS 模拟器 bundle 的最小必需 Info.plist 键,沉淀进

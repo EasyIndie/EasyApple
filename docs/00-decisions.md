@@ -18,6 +18,7 @@
 | **D11** | **远程仓库 = `EasyIndie/EasyApple`,origin 用 HTTPS。** | 与 EasyAndroid 同组织、同协议。已落地:2026-09-26 首次 push。 | `accepted` | 要换 SSH/组织/协议时改 `git remote set-url`。 |
 | **D12** | **目标工具链 = Xcode 27.0(最新)。** | macOS 27.0 已满足 Xcode 27 的 ≥26.6 要求;锁最新、带 Swift 6.4 + iOS 27 SDK。 | `accepted` | 降级路径:Xcode 26.6(macOS 26.2+)。 |
 | **D13** | **arm64-only,Intel Mac 不纳入构建与分发。** | Xcode 27 / macOS 27 已无 Intel 构建;手里唯一 Intel(2015 MBP)永久出局。 | `accepted` | 要支持 Intel 须退回 Xcode 26.6 + universal 构建 + 降 target,见 PLAN 附录 A。 |
+| **D14** | **`xcodes` 仅用于 bootstrap 装机(装 Xcode + 模拟器 runtime),不进入构建/打包链路。** | 装机也要命令行化、可锁版本/架构;xcodes 是 Apple 下载页的自动化客户端,不改变 Xcode 本体。属于「装机」而非「构建/打包」,不违反 D5。 | `accepted` | 若要零第三方二进制,退路是官网直下 `.xip` + `xip --expand`。 |
 
 ## 变更记录
 
@@ -26,3 +27,4 @@
 | 2026-09-26 | 初版(D1–D11,全部 `proposed`,Windows 上落档) |
 | 2026-09-26 | D11 修正:origin 改 HTTPS 并标记「已落地」 |
 | 2026-09-26 | 在 Air 上定稿:D2/D4/D5/D6/D7/D8/D9/D11 采纳;D3/D10 被取代;新增 D12/D13 |
+| 2026-09-26 | 新增 D14(xcodes 仅 bootstrap 装机) |
