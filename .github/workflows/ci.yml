@@ -30,14 +30,23 @@ jobs:
           done < <(git log --format=%s "$base..$head")
           [ "$bad" -eq 0 ] || { echo "存在不符合 Conventional Commits 的提交"; exit 1; }
 
-      - name: 选择 Xcode 27
+      - name: 选择 Xcode 27(优先 27.0 稳定版)
         run: |
+          echo "可用 Xcode:"; ls -d /Applications/Xcode*.app || true
           shopt -s nullglob
-          candidates=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
-          if [ ${#candidates[@]} -gt 0 ]; then
-            pick="$(printf '%s\n' "${candidates[@]}" | sort -V | tail -1)"
+          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          pick=""
+          for p in "${all[@]}"; do
+            case "$p" in *27.0*) pick="$p"; break;; esac
+          done
+          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
+          fi
+          if [ -n "$pick" ]; then
             echo "选择: $pick"
             sudo xcode-select -s "$pick/Contents/Developer"
+          else
+            echo "未找到 Xcode 27,使用默认"
           fi
           xcodebuild -version
 
