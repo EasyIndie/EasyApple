@@ -60,3 +60,16 @@
 - **原因**:`--follow-tags` **只推附注标签(annotated)**,不推轻量标签(lightweight)。`git tag <名>` 默认建的是轻量标签。
 - **校验**:`git cat-file -t <tag>` → `commit` 是轻量,`tag` 才是附注;`git ls-remote --tags origin` 看远端有没有。
 - **解法**:`git tag -a <名> -m "Release <名>"`;或直接 `git push origin <tag>`。`tools/release.sh` 已改为 `-a`。
+
+## 11. macOS 27 的 `VNRecognizeTextRequest` 只认语言列表第一个
+
+- **症状**:中英混排文本 OCR 出乱码。以 `recognitionLanguages = ["en-US", "zh-Hans"]` 为例,"型号：iPhone 17" 的中文会变乱码/丢失。
+- **原因**:macOS 27(至 27.2 Beta 1)的 Vision OCR bug —— **只使用列表第一个语言**;混排必须把 `zh-Hans` 放第一。
+- **来源**:[missuo/macos27-vision-ocr-bug](https://github.com/missuo/macos27-vision-ocr-bug)(第三方复现,非 Apple 官方)。
+- **解法**:用 `["zh-Hans", "en-US"]` 顺序(`tools/uiscan.swift` 默认即此);实测 zh-Hans 模型也能正确识别拉丁字符。
+
+## 12. GitHub macOS runner 上 Vision OCR 不可用
+
+- **症状**:本地 OCR 正常,CI 上 `uiscan` 报 `unknownError` / `nilError`,各种语言 + 级别都失败。
+- **原因**:未查清(疑似 runner 上 Vision 模型资产缺失)。`xcode-27-arm64` 镜像实测如此。
+- **解法**:CI 里 **OCR 不可用则跳过**(见 `.github/workflows/ci.yml`);把文本验收当本地能力。真正的模拟器冒烟(打包/安装/启动/截图)在 CI 上照常工作。

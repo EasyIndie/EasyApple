@@ -55,31 +55,39 @@ guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, 
   fail("无法读取图片: \(path)", 3)
 }
 
-// 识别(带语言回退:请求语言 → en-US → 系统默认)。CI runner 上可能没有 zh 模型,会抛 unknownError。
-func recognize(languages: [String]?) throws -> [VNRecognizedTextObservation] {
+// 一次识别尝试(指定级别 + 语言)
+func recognize(level: VNRequestTextRecognitionLevel, languages: [String]?) throws -> [VNRecognizedTextObservation] {
   let request = VNRecognizeTextRequest()
-  request.recognitionLevel = fast ? .fast : .accurate
-  request.usesLanguageCorrection = !fast
+  request.recognitionLevel = level
+  request.usesLanguageCorrection = (level == .accurate)
   if let languages { request.recognitionLanguages = languages }
   try VNImageRequestHandler(cgImage: cg, options: [:]).perform([request])
   return request.results ?? []
 }
 
-var observations: [VNRecognizedTextObservation]
-do {
-  observations = try recognize(languages: langs)
-} catch {
-  FileHandle.standardError.write(Data("uiscan: 语言 \(langs) 不可用(\(error));回退 en-US\n".utf8))
+// 回退链:首选 → accurate/en-US → fast/en-US → fast/系统默认。
+// 注:macOS 27 有已知 bug —— 语言列表**只认第一个**,中英混排必须 `[zh-Hans, en-US]`(见 docs/08)。
+let attempts: [(VNRequestTextRecognitionLevel, [String]?, String)] = [
+  (fast ? .fast : .accurate, langs, "首选"),
+  (.accurate, ["en-US"], "accurate+en-US"),
+  (.fast, ["en-US"], "fast+en-US"),
+  (.fast, nil, "fast+系统默认"),
+]
+
+var observations: [VNRecognizedTextObservation]?
+var lastError: Error?
+for (index, attempt) in attempts.enumerated() {
   do {
-    observations = try recognize(languages: ["en-US"])
+    observations = try recognize(level: attempt.0, languages: attempt.1)
+    if index > 0 { FileHandle.standardError.write(Data("uiscan: 回退到 \(attempt.2) 成功\n".utf8)) }
+    break
   } catch {
-    FileHandle.standardError.write(Data("uiscan: en-US 不可用(\(error));回退系统默认\n".utf8))
-    do {
-      observations = try recognize(languages: nil)
-    } catch {
-      fail("OCR 失败: \(error)", 4)
-    }
+    lastError = error
+    FileHandle.standardError.write(Data("uiscan: \(attempt.2) 失败(\(error))\n".utf8))
   }
+}
+guard let observations = observations else {
+  fail("OCR 失败(所有配置均失败,本环境可能不支持 Vision OCR): \(lastError.map { "\($0)" } ?? "未知")", 4)
 }
 
 struct Line: Codable {

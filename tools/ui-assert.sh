@@ -42,6 +42,7 @@ fi
 [ -f "$INPUT" ] || die "找不到图片: $INPUT"
 
 BIN="$(ensure_uiscan)"
+[ -x "$BIN" ] || die "uiscan 不可用(编译失败?)"
 TEXT="$("$BIN" "$INPUT")" || die "OCR 失败: $INPUT"
 
 FAILED=0

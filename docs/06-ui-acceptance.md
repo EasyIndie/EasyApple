@@ -49,6 +49,9 @@ GPU： Apple 10S simulator GPU
 
 > ⚠️ **OCR 是「有损」识别**。断言要选**稳定、无歧义**的串(`arm64`、`模拟器`、`393 x 852`),
 > 别用 OCR 易看错的(实测 `iPhone 17` → `1Phone 17`、`iOS` → `10S`)。
+>
+> ⚠️ **macOS 27 已知 bug**:语言列表**只认第一个**;中英混排必须 `[zh-Hans, en-US]`
+> (反过来 `[en-US, zh-Hans]` 会把中文识别成乱码)。本工具默认就用这个顺序,见 [08](08-gotchas.md)。
 
 ## 4. 为什么不用无障碍树 / XCUITest / idb(实测否决)
 
@@ -72,8 +75,12 @@ GPU： Apple 10S simulator GPU
 
 ## 6. CI
 
-`ci.yml` 的「模拟器冒烟」步骤跑 `run-sim --screenshot` 后调用
-`ui-assert --contains "arm64" --contains "模拟器"`,截图作为 artifact 上传(`continue-on-error`)。
+`ci.yml` 的「模拟器冒烟」步骤跑 `run-sim --screenshot` 后尝试文本断言,截图作为 artifact 上传。
+
+> ⚠️ **实测:GitHub macOS runner 上 Vision OCR 不可用。** 在 `xcode-27-arm64` runner 上
+> `VNRecognizeTextRequest` 对各种语言/级别都报 `unknownError` / `nilError`。所以 CI 里
+> **OCR 不可用则跳过**(不误报失败);**文本验收在本地 M1 Air 上才真正生效**。
+> 真正的模拟器冒烟(打包/安装/启动/截图)在 CI 上照常工作。
 
 ## 7. 已知限制
 
