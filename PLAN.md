@@ -114,27 +114,27 @@
 
 ## Phase E — 文档(`docs/`)
 
-- [ ] **E1** `01-headless-apple-build.md`(无 IDE 的 Apple 构建环境)
-- [ ] **E2** `02-swiftpm-project-conventions.md`(SwiftPM 分层范式)
-- [ ] **E3** `03-simulator-cli.md`(模拟器 CLI 与 Xcode 27 Device Hub)
-- [ ] **E4** `04-packaging-native.md`(原生打包脚本原理与踩坑)
-- [ ] **E5** `05-app-conventions.md`(工程/命名/版本号/发版流程)
-- [ ] **E6** `06-ui-acceptance.md`(截图 vs 无障碍文本)
-- [ ] **E7** `07-cross-platform-and-no-mac.md`(跨平台 / 无 Mac 全景,首期不采用)
-- [ ] **E8** `08-gotchas.md`(踩坑速查)
-- [ ] **E9** 归档 `docs/research/`(执行期文档落地后,保留 01/03 作引用源)
-- [ ] **E10** `docs/README.md` 索引更新
+- [x] **E1** `01-headless-apple-build.md`(✅)
+- [x] **E2** `02-swiftpm-project-conventions.md`(✅)
+- [x] **E3** `03-simulator-cli.md`(✅)
+- [x] **E4** `04-packaging-native.md`(✅)
+- [x] **E5** `05-app-conventions.md`(✅)
+- [x] **E6** `06-ui-acceptance.md`(✅)
+- [x] **E7** `07-cross-platform-and-no-mac.md`(✅)
+- [x] **E8** `08-gotchas.md`(✅)
+- [x] **E9** `docs/research/` 保留作来源(01 平台规则 / 03 否定结论);已在 docs/README 标明分工
+- [x] **E10** `docs/README.md` 索引更新(✅)
 
 ---
 
 ## Phase F — 静态自检与交付
 
-- [ ] **F1** `for f in tools/*.sh; do bash -n "$f"; done` 全通过
-- [ ] **F2** 用 YAML 解析器校验两个 workflow
-- [ ] **F3** 校验文档内部链接与文件引用全部存在
-- [ ] **F4** `git grep` 确认真实内网 IP / token / 私钥**零命中**
-- [ ] **F5** 检查文档没有把「桌面推演」写成「已验证」
-- [ ] **F6** 在 Air 上跑 `tools/verify-all.sh` 作为总验收
+- [x] **F1** `bash -n tools/*.sh` → ✅ 13 个脚本全通过
+- [x] **F2** YAML 校验两个 workflow → ✅ 通过(ruby YAML)
+- [x] **F3** 文档内部链接校验 → ✅ 全部存在(修掉执行期文档的 `../` 误用)
+- [x] **F4** `git grep` 真实 IP / token / 私钥 → ✅ 零命中
+- [x] **F5** 措辞检查 → ✅ research 标「未验证/已核实」,执行期文档用「实测」
+- [x] **F6** `tools/verify-all.sh` 总验收 → ✅ 6/6 通过
 
 ---
 
@@ -155,4 +155,6 @@
 |---|---|---|
 | 2026-09-26 | 初版(Windows 上落档) | 规划期完成 |
 | 2026-09-26 | 在 Air 上重估:改原生打包 + arm64-only + 删交接文档 | 已上 Air,锁 Xcode 27,Windows 退出 |
-| | | |
+| 2026-09-26 | Phase 0–C 完成:装 Xcode 27.0、EnvDemo 工程、原生打包全链路验证 | 执行期 |
+| 2026-09-26 | Phase D 完成:CI/release 用 `xcode-27` label + Xcode 27.0 | 对齐 Air(实测) |
+| 2026-09-26 | Phase E–F 完成:执行期文档 01–08 + 静态自检 + verify-all 6/6 | — |
