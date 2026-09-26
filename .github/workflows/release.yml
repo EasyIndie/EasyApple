@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   release:
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -25,12 +25,18 @@ jobs:
           echo "tag=$tag version=$v"
           [ "$tag" = "$v" ] || { echo "tag 与 version.properties 不一致"; exit 1; }
 
-      - name: 选择 Xcode 27
+      - name: 选择 Xcode 27(优先 27.0 稳定版)
         run: |
           shopt -s nullglob
-          candidates=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
-          if [ ${#candidates[@]} -gt 0 ]; then
-            pick="$(printf '%s\n' "${candidates[@]}" | sort -V | tail -1)"
+          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          pick=""
+          for p in "${all[@]}"; do
+            case "$p" in *27.0*) pick="$p"; break;; esac
+          done
+          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
+          fi
+          if [ -n "$pick" ]; then
             sudo xcode-select -s "$pick/Contents/Developer"
           fi
           xcodebuild -version

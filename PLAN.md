@@ -108,7 +108,7 @@
 
 - [x] **D1** `ci.yml`(✅ 已写:pin `macos-26`、选 Xcode 27、Conventional Commits 校验、doctor→sync-version→build→test→run-sim+截图→artifact)
 - [x] **D2** `release.yml`(✅ 已写:tag 触发 → 校验 tag==version.properties → bundle → `gh release create`)
-- [ ] **D3** 开 Actions 验证首跑(顺带验证「runner 默认 Xcode 与 Air 27.0 对齐」)— 待首次 push 后观察 run 日志
+- [x] **D3** 开 Actions 验证首跑 → ✅ 成功。**发现**:`macos-26` 默认只有 Xcode 26.6;`xcode-27` 镜像含 27.0/27.1/27.2(+beta)。已改用 `xcode-27` + 优先选 `Xcode_27.0.0.app`(**Build 27A266a,与 Air 完全一致**);doctor/build/test/模拟器冒烟均绿。
 
 ---
 
