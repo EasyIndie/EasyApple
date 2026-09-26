@@ -68,13 +68,13 @@ jobs:
           mkdir -p .tmp
           bash tools/run-sim.sh --screenshot "$PWD/.tmp/ci-sim.png" \
             || echo "模拟器步骤失败(不阻塞 CI)"
-          # GitHub macOS runner 上 Vision OCR 不可用(见 docs/06 §6):不可用则跳过,不误报失败
+          # runner 是 VM(无 GPU/ANE),accurate 会失败但 fast 可用;uiscan 自动降级。两种都不可用则跳过,不误报
           if bash tools/ui-scan.sh --input "$PWD/.tmp/ci-sim.png" >/dev/null 2>"$PWD/.tmp/uiscan.log"; then
             bash tools/ui-assert.sh --input "$PWD/.tmp/ci-sim.png" \
               --contains "arm64" --contains "GB" \
               || echo "文本断言失败(不阻塞 CI)"
           else
-            echo "[skip] 本 runner 上 Vision OCR 不可用,跳过文本断言(本地可用;原因见 docs/06)"
+            echo "[skip] 本 runner 上 Vision OCR 不可用,跳过文本断言(原因见 docs/08)"
             sed 's/^/    /' "$PWD/.tmp/uiscan.log"
           fi
 

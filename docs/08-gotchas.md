@@ -68,8 +68,8 @@
 - **来源**:[missuo/macos27-vision-ocr-bug](https://github.com/missuo/macos27-vision-ocr-bug)(第三方复现,非 Apple 官方)。
 - **解法**:用 `["zh-Hans", "en-US"]` 顺序(`tools/uiscan.swift` 默认即此);实测 zh-Hans 模型也能正确识别拉丁字符。
 
-## 12. GitHub macOS runner 上 Vision OCR 不可用
+## 12. Vision OCR 的 `.accurate` 在 CI(VM)上跑不起来
 
-- **症状**:本地 OCR 正常,CI 上 `uiscan` 报 `unknownError` / `nilError`,各种语言 + 级别都失败。
-- **原因**:未查清(疑似 runner 上 Vision 模型资产缺失)。`xcode-27-arm64` 镜像实测如此。
-- **解法**:CI 里 **OCR 不可用则跳过**(见 `.github/workflows/ci.yml`);把文本验收当本地能力。真正的模拟器冒烟(打包/安装/启动/截图)在 CI 上照常工作。
+- **症状**:本地 `.accurate` 正常;CI(`xcode-27-arm64`)上 `.accurate` 报 `unknownError` / `nilError`,但 **`.fast` 可用**。
+- **原因**:GitHub macOS runner 是 **VM**,日志里可见 `IOServiceMatching failed for: AppleM2ScalerParavirtDriver` —— 无真 GPU/ANE,accurate 模型跑不起来。
+- **解法**:`uiscan` 用**多配置回退链**(首选 → accurate+en-US → **fast+en-US** → fast+默认),CI 上自动降级到 `.fast`,断言照常通过。代价:`.fast` 下中文识别略糙,故 CI 断言只用 ASCII token(`arm64`/`GB`)。

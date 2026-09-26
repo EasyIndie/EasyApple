@@ -75,12 +75,12 @@ GPU： Apple 10S simulator GPU
 
 ## 6. CI
 
-`ci.yml` 的「模拟器冒烟」步骤跑 `run-sim --screenshot` 后尝试文本断言,截图作为 artifact 上传。
+`ci.yml` 的「模拟器冒烟」步骤跑 `run-sim --screenshot` 后做文本断言,截图作为 artifact 上传。
 
-> ⚠️ **实测:GitHub macOS runner 上 Vision OCR 不可用。** 在 `xcode-27-arm64` runner 上
-> `VNRecognizeTextRequest` 对各种语言/级别都报 `unknownError` / `nilError`。所以 CI 里
-> **OCR 不可用则跳过**(不误报失败);**文本验收在本地 M1 Air 上才真正生效**。
-> 真正的模拟器冒烟(打包/安装/启动/截图)在 CI 上照常工作。
+> **实测**:GitHub `xcode-27-arm64` runner 是 **VM(无真 GPU/ANE**,日志有 `AppleM2ScalerParavirtDriver`),
+> `VNRecognizeTextRequest` 的 **`.accurate` 级别会失败**(`unknownError`/`nilError`),但 **`.fast` 级别可用**。
+> `uiscan` 的多配置回退链会自动降级到 `.fast`,所以 **CI 上文本断言真的跑通了**(实测 `arm64`/`GB` 均通过)。
+> 若某环境两种级别都不可用,CI 会**跳过**而不误报失败。
 
 ## 7. 已知限制
 
