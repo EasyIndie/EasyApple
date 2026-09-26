@@ -26,10 +26,9 @@
 ## 1. 你在 Air 上要做的第一件事:改计划,不是写代码
 
 ```bash
-# 1) 把仓库弄到 Air 上(二选一)
-#    a. 如果已经推到 GitHub:
-git clone git@github.com:EasyIndie/EasyApple.git
-#    b. 如果还没推(见 §5),先用 U 盘 / scp / 共享盘把 E:\EasyApple 拷过来
+# 1) 把仓库弄到 Air 上(仓库已创建并推送,见 §5)
+git clone https://github.com/EasyIndie/EasyApple.git
+#    若 Air 上已配好 GitHub SSH key,也可用 git@github.com:EasyIndie/EasyApple.git
 cd EasyApple
 
 # 2) 读计划
@@ -104,31 +103,40 @@ bash tools/verify-all.sh    # 总验收
 
 ---
 
-## 5. GitHub 与「首次 push 在哪里做」
+## 5. GitHub(仓库已创建并完成首次 push)
 
-- 目标仓库:`EasyIndie/EasyApple`(SSH:`git@github.com:EasyIndie/EasyApple.git`;
-  组织与 EasyAndroid 一致)。
-- 仓库**可能还没在 GitHub 上创建**;若没有,请先建(public,与 EasyAndroid 一致)。
+- 仓库:**https://github.com/EasyIndie/EasyApple**(public,与 EasyAndroid 同组织)。
+- 状态:2026-09-26 已从 Windows 推送 `main`(commit `8802cf0`),`git status -sb` 显示
+  `## main...origin/main`,远端 HEAD 与本地一致。
+- `origin` = `https://github.com/EasyIndie/EasyApple.git`(**HTTPS**,与 EasyAndroid 一致)。
 
-### ⚠️ 两个已知坑
+### 为什么用 HTTPS 而不是 SSH
 
-1. **受管沙箱(如 WorkBuddy)里,`git` 写远程跟踪引用会静默失败**
-   (`git push` 报成功但没推上去,`git status -sb` 出现 `[gone]`)。→ **首次 push
-   建议在 Air 上做**(你的终端不受这个限制)。
-2. **不要用 `git push "https://x-access-token:$TOKEN@github.com/..."` 配 `-u`** ——
-   token 会被写进 `.git/config` 的 upstream。用已配好的凭据助手,直接 `git push`。
-
-### 首次 push 步骤(Air 上)
+Windows/WSL 侧没有配 GitHub SSH key(`git@github.com` 报 `Permission denied (publickey)`)。
+改用 HTTPS + **凭据助手**认证;本机已配置:
 
 ```bash
-# 若尚未配置远程:
-git remote add origin git@github.com:EasyIndie/EasyApple.git
-git branch -M main
-git push -u origin main
+git config --local 'credential.https://github.com.helper' \
+  '!"/mnt/c/Program Files/GitHub CLI/gh.exe" auth git-credential'
 ```
 
-> 当前 Windows 本地仓库**只做了 `git init` + 提交,没有 push**(按你的要求省略了
-> 推送步骤)。所以你要么先在 Windows 上推、要么把目录拷到 Air 再推。
+它调用 Windows 上已登录的 `gh`(账号 `wangzhizhou`),**不会**把 token 写进 `.git/config`。
+Air 上若已配 SSH key,可自行改回 `git@github.com:EasyIndie/EasyApple.git`。
+
+### ⚠️ 两个已知坑(保留)
+
+1. **受管沙箱(如 WorkBuddy)里,`git` 写远程跟踪引用可能静默失败**
+   (`git push` 报成功但没推上去,`git status -sb` 出现 `[gone]`)。本次推送**没有**
+   触发这个问题(已核验远端 HEAD == 本地 HEAD),但坑仍然存在。
+2. **不要用 `git push "https://x-access-token:$TOKEN@github.com/..."` 配 `-u`** ——
+   token 会被写进 `.git/config` 的 upstream。用凭据助手,直接 `git push`。
+
+### 后续 push(Air 或其他机器)
+
+```bash
+git pull --rebase     # 先同步
+git push              # 已配置 upstream,直接推
+```
 
 ---
 
@@ -140,7 +148,7 @@ git push -u origin main
    XcodeGen 逃生舱的投入。
 4. **swift-bundler 的 pin commit** 取哪个?(执行阶段 `bootstrap.sh` 会写死一个,
    你可在 Air 上按实际 `main` HEAD 调整。)
-5. **远程仓库用 SSH 还是 HTTPS?** 默认 SSH;EasyAndroid 用的是 HTTPS。
+5. ~~远程仓库用 SSH 还是 HTTPS?~~ → **已定:HTTPS**(见 §5),已推送。
 
 ---
 

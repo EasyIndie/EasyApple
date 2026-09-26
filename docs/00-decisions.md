@@ -17,10 +17,11 @@
 | **D8** | **版本唯一来源 = `version.properties`(严格 SemVer);仓库内禁止版本号字面量。** | 沿用 EasyAndroid。CMake/Gradle/Xcode 各处的版本都从它推导,避免漂移。 | `proposed` | 无。 |
 | **D9** | **CI runner = `macos-26` 显式 pin,不用 `-latest`。** | 换 OS = 换构建环境,不该无声发生(沿用 EasyAndroid 对 `ubuntu-24.04` 的同款约定)。macOS runner 是 arm64,与 Air 对齐。 | `proposed` | 升 runner 单独开一次、先在 CI 上验过再合。 |
 | **D10** | **`swift-bundler` pin 到具体 commit(不用 `@main` 浮动)。** | 它无稳定 release,官方建议从 `main` 装;浮动会带来不可复现的构建。 | `proposed` | 升级时改 `tools/bootstrap.sh` 里的 commit,并在 `doctor.sh` 记录实际版本。 |
-| **D11** | **远程仓库 = `EasyIndie/EasyApple`(SSH:`git@github.com:EasyIndie/EasyApple.git`)。** | 与 EasyAndroid 同组织,复用同一套发版约定。注:EasyAndroid 的 origin 用的是 HTTPS。 | `proposed` | 需要 https 或换组织时,改 `git remote set-url origin …` 与 CI/README 里的链接。 |
+| **D11** | **远程仓库 = `EasyIndie/EasyApple`,origin 用 HTTPS(`https://github.com/EasyIndie/EasyApple.git`)。** | 与 EasyAndroid 同组织、同协议,复用同一套发版约定。**已落地**:2026-09-26 首次 push(commit `8802cf0`)。WSL 侧无 GitHub SSH key,故用 HTTPS + `gh` 凭据助手。 | `proposed` | 要换 SSH/组织/协议时,改 `git remote set-url origin …` 与 CI/README 里的链接。 |
 
 ## 变更记录
 
 | 日期 | 变更 |
 |---|---|
 | 2026-09-26 | 初版(D1–D11,全部 `proposed`,Windows 上落档) |
+| 2026-09-26 | D11 修正:origin 改为 HTTPS 并标记「已落地」(首次 push 完成) |
