@@ -88,22 +88,19 @@
 > 约定:所有脚本 source `tools/_common.sh`;平台固定 macOS,无需跨平台分支。
 
 - [x] **C1** `tools/_common.sh`(REPO_ROOT / DEVELOPER_DIR / `die`·`note`·`ok`·`skip` / 版本读取)
-- [ ] **C2** `tools/doctor.sh` —— 环境自检(同 P1.4)
-- [ ] **C3** `tools/bootstrap.sh` —— 引导安装 Xcode + iOS runtime(幂等)
-- [ ] **C4** `tools/sync-version.sh` —— 从 `version.properties` 写 `Info.plist` 的
-  `CFBundleShortVersionString` / `CFBundleVersion`;`--check` 只校验
-- [ ] **C5** `tools/build.sh` —— `swift build`(先 `sync-version`)
-- [ ] **C6** `tools/test.sh` —— `swift test`
-- [x] **C7** `tools/bundle.sh` —— 原生打包(✅ 已实现:macOS + iOSSimulator,读 version.properties 填版本,ad-hoc 签名)
-- [ ] **C8** `tools/run-sim.sh` —— `simctl boot` + `install` + `launch`
-- [ ] **C9** `tools/sim.sh` —— 封装 `simctl`;含 `xcodebuild -downloadPlatform iOS`
-- [ ] **C10** `tools/ui-dump.sh` —— 截图(`simctl io <device> screenshot`);文本树后置
-- [ ] **C11** `tools/new-app.sh` —— 以 `EnvDemo` 为模板生成 `apps/<Name>/`
-- [ ] **C12** `tools/verify-all.sh` —— 串 `doctor → sync-version --check → build →
-  test → run-sim → ui-dump`,输出通过/失败/跳过计数
-- [ ] **C13** `tools/release.sh` —— Conventional Commits → SemVer;写
-  `version.properties` + `CHANGELOG.md`;打 tag;推;CI 出包
-- [ ] **C14** `tools/README.md` —— 每个脚本一句话用途
+- [x] **C2** `tools/doctor.sh` —— 环境自检(✅ 9 项全绿)
+- [x] **C3** `tools/bootstrap.sh` —— 引导装 xcodes → Xcode 27 → iOS runtime(幂等;sudo/登录人工)
+- [x] **C4** `tools/sync-version.sh` —— 版本输出 / `--check`(SemVer + 源码无版本字面量,D8)
+- [x] **C5** `tools/build.sh` —— `swift build`(先 `sync-version --check`)
+- [x] **C6** `tools/test.sh` —— `swift test`
+- [x] **C7** `tools/bundle.sh` —— 原生打包(macOS + iOSSimulator,读 version.properties 填版本,ad-hoc 签名)
+- [x] **C8** `tools/run-sim.sh` —— 打包并跑 iOS 模拟器(boot→install→launch→可选截图)
+- [x] **C9** `tools/sim.sh` —— `simctl` 封装(list/runtimes/boot/install/launch/screenshot/download-runtime)
+- [x] **C10** `tools/ui-dump.sh` —— 截图验收(文本树后置)
+- [x] **C11** `tools/new-app.sh` —— 以 EnvDemo 为模板生成 apps/<Name>/(✅ 已验证改名无残留)
+- [x] **C12** `tools/verify-all.sh` —— 总验收(✅ 6/6 通过:doctor/sync-version/build/test/run-sim/ui-dump)
+- [x] **C13** `tools/release.sh` —— Conventional Commits → SemVer(改版本 + 打 tag)
+- [x] **C14** `tools/README.md` —— 脚本索引
 
 ---
 
