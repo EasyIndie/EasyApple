@@ -45,7 +45,7 @@
 
 ## Phase 1 — 工具链安装 + 原生打包原型
 
-- [ ] **P1.1** 装 `xcodes`(bootstrap 工具,D14)→ `brew install xcodesorg/made/xcodes` → `xcodes install 27.0`
+- [~] **P1.1** 装 `xcodes`(bootstrap 工具,D14)→ ✅ 已装 **2.1.0**(直下 release 二进制;brew 源码构建被沙箱拦)→ 待 `xcodes install 27.0`(需 Apple ID + 2FA)
 - [ ] **P1.2** `sudo xcodebuild -license accept` + `xcodes select 27.0`
 - [ ] **P1.3** 下载 iOS 模拟器 runtime:`xcodes runtimes install "iOS 27.0"`(或 `xcodebuild -downloadPlatform iOS`)
 - [ ] **P1.4** 写 `tools/doctor.sh`(环境自检)
@@ -54,6 +54,9 @@
   + `codesign --force --sign -` + `simctl install/launch`
 - [ ] **P1.7** 实测 iOS 模拟器 bundle 的最小必需 Info.plist 键,沉淀进
   `docs/04-packaging-native.md`(执行期创建)
+
+> 已确认(2026-09-26):`xcodes list` 显示 `27.0 (27A266a) [Apple Silicon]`(与 D12 一致;27.x 无 Intel 构建,印证 D13)。
+> ⚠️ 踩坑:`brew install xcodesorg/made/xcodes` 走源码构建(git clone SPM 依赖),在受管沙箱里 getcwd 报 `Operation not permitted`;改直下 release 二进制(`xcodes.zip` → `/opt/homebrew/bin/xcodes`)。
 
 ---
 
