@@ -41,29 +41,40 @@ jobs:
           fi
           xcodebuild -version
 
-      - name: 打包(macOS)
-        run: bash tools/bundle.sh --platform macOS
+      - name: 打包(macOS,遍历所有应用)
+        run: |
+          source tools/_common.sh
+          for app in $(list_apps); do
+            echo "== $app =="
+            bash tools/bundle.sh --app "$app" --platform macOS
+          done
 
       - name: 建 Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           source tools/_common.sh
-          APP="apps/EnvDemo/.build/bundle/EnvDemo.app"
-          archive="EnvDemo-${GITHUB_REF_NAME}.tar.gz"
-          stage="$(mktemp -d)"
-          cp -R "$APP" "$stage/"
-          items=(EnvDemo.app)
-          # 仅当产物是 ad-hoc(未真实签名)时,附上绕过 Gatekeeper 的打开脚本;
-          # 一旦将来用 Developer ID 签字并公证,就不再附带。
-          if is_adhoc_signed "$APP"; then
-            echo "产物为 ad-hoc 签名 → 附带 open-unsigned-app.sh"
-            install -m 0755 tools/open-unsigned-app.sh "$stage/"
-            items+=(open-unsigned-app.sh)
-          else
-            echo "产物已真实签名 → 不附带绕过脚本"
-          fi
-          tar -czf "$archive" -C "$stage" "${items[@]}"
-          gh release create "${GITHUB_REF_NAME}" "$archive" --generate-notes
+          archives=()
+          for app in $(list_apps); do
+            APP="apps/$app/.build/bundle/$app.app"
+            [ -d "$APP" ] || { echo "缺少 $APP(打包步骤失败?)"; exit 1; }
+            archive="$app-${GITHUB_REF_NAME}.tar.gz"
+            stage="$(mktemp -d)"
+            cp -R "$APP" "$stage/"
+            items=("$app.app")
+            # 仅当产物是 ad-hoc(未真实签名)时,附上绕过 Gatekeeper 的打开脚本;
+            # 一旦将来用 Developer ID 签名并公证,就不再附带。
+            if is_adhoc_signed "$APP"; then
+              echo "$app: ad-hoc 签名 → 附带 open-unsigned-app.sh"
+              install -m 0755 tools/open-unsigned-app.sh "$stage/"
+              items+=(open-unsigned-app.sh)
+            else
+              echo "$app: 已真实签名 → 不附带绕过脚本"
+            fi
+            tar -czf "$archive" -C "$stage" "${items[@]}"
+            archives+=("$archive")
+          done
+          [ "${#archives[@]}" -gt 0 ] || { echo "apps/ 下没有可发布的应用"; exit 1; }
+          gh release create "${GITHUB_REF_NAME}" "${archives[@]}" --generate-notes
           # 后续签名 secrets 命名预留(本阶段零证书,不启用):
           #   APPLE_CERT_P12_BASE64 / APPLE_CERT_PASSWORD / APPLE_ID / APPLE_TEAM_ID

@@ -62,21 +62,33 @@ jobs:
       - name: 测试
         run: bash tools/test.sh
 
-      - name: 模拟器冒烟(run-sim + 截图 + 文本断言)
+      - name: 模拟器冒烟 + 文本断言(遍历所有应用)
         continue-on-error: true
         run: |
+          set -uo pipefail
+          source tools/_common.sh
           mkdir -p .tmp
-          bash tools/run-sim.sh --screenshot "$PWD/.tmp/ci-sim.png" \
-            || echo "模拟器步骤失败(不阻塞 CI)"
-          # runner 是 VM(无 GPU/ANE),accurate 会失败但 fast 可用;uiscan 自动降级。两种都不可用则跳过,不误报
-          if bash tools/ui-scan.sh --input "$PWD/.tmp/ci-sim.png" >/dev/null 2>"$PWD/.tmp/uiscan.log"; then
-            bash tools/ui-assert.sh --input "$PWD/.tmp/ci-sim.png" \
-              --contains "arm64" --contains "GB" \
-              || echo "文本断言失败(不阻塞 CI)"
-          else
-            echo "[skip] 本 runner 上 Vision OCR 不可用,跳过文本断言(原因见 docs/08)"
-            sed 's/^/    /' "$PWD/.tmp/uiscan.log"
-          fi
+          for app in $(list_apps); do
+            echo "::group::模拟器冒烟 $app"
+            if ! bash tools/run-sim.sh --app "$app" --screenshot "$PWD/.tmp/ci-$app.png"; then
+              echo "[skip] $app 启动失败(不阻塞 CI)"
+              echo "::endgroup::"
+              continue
+            fi
+            # runner 是 VM(无 GPU/ANE),accurate 会失败但 fast 可用;uiscan 自动降级。两种都不可用则跳过,不误报
+            if bash tools/ui-scan.sh --input "$PWD/.tmp/ci-$app.png" >/dev/null 2>"$PWD/.tmp/uiscan-$app.log"; then
+              if [ -f "apps/$app/ui-assertions.txt" ]; then
+                bash tools/ui-assert.sh --input "$PWD/.tmp/ci-$app.png" --app "$app" \
+                  || echo "文本断言失败(不阻塞 CI)"
+              else
+                echo "[skip] $app 无 apps/$app/ui-assertions.txt,跳过文本断言"
+              fi
+            else
+              echo "[skip] 本 runner 上 Vision OCR 不可用,跳过文本断言(原因见 docs/08)"
+              sed 's/^/    /' "$PWD/.tmp/uiscan-$app.log"
+            fi
+            echo "::endgroup::"
+          done
 
       - name: 上传截图
         if: always()

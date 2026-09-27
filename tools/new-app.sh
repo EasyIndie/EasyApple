@@ -28,4 +28,9 @@ while IFS= read -r p; do
 done < <(find "$DST" -depth -name '*EnvDemo*')
 
 ok "已生成 apps/$NAME"
-note "请检查:Package.swift / Bundle ID / Info.plist 是否都已改名"
+note "接下来:"
+note "  1) 改 apps/$NAME/Sources/$NAME/ 与 Sources/${NAME}Core/ —— 模板里还是 EnvDemo 的探测代码"
+note "  2) 改 apps/$NAME/ui-assertions.txt —— 换成你自己 UI 的稳定文本断言(OCR)"
+note "  3) tools/build.sh $NAME && tools/test.sh $NAME && tools/run-sim.sh --app $NAME"
+note "  4) 版本号是全仓库共享的(version.properties,见决策 D8)"
+note "  验证无改名残留:grep -rn EnvDemo apps/$NAME"

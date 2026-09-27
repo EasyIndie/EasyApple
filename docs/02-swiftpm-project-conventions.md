@@ -81,3 +81,49 @@ xcrun swift build -c release --triple arm64-apple-ios-simulator \
 
 - `formatBytes`:固定 `en_US_POSIX` locale,输出确定(避免 `ByteCountFormatter` 的本地化差异)。
 - 用整数字面量断言:`formatBytes(17_179_869_184) == "16.00 GB"`。
+
+## 6. 新建应用(多应用支持)
+
+仓库用 `apps/<AppName>/` 一个一个放应用;工具链**默认遍历 `apps/` 下所有应用**。
+
+### 一条命令生成
+
+```bash
+tools/new-app.sh MyApp
+```
+
+做三件事:复制 `apps/EnvDemo` → `apps/MyApp`;把文件内容里的 `EnvDemo` 全换成 `MyApp`;
+把路径里含 `EnvDemo` 的文件/目录改名(`Sources/EnvDemoCore/` → `Sources/MyAppCore/` 等),并删掉 `.build`。
+
+> ⚠️ 它是**克隆 EnvDemo、不是空白模板**:新工程里仍是环境探测代码,得自己重写 `Sources/`。
+> 机械替换也不懂语义,改完 grep 一下:`grep -rn EnvDemo apps/MyApp`。
+
+### 然后
+
+```bash
+tools/build.sh MyApp                  # 构建(不给参数 = 构建全部)
+tools/test.sh  MyApp
+tools/bundle.sh --app MyApp           # 打包;Bundle ID 自动 = com.easyapple.myapp
+tools/run-sim.sh --app MyApp          # 装进模拟器并启动
+tools/verify-all.sh MyApp             # 端到端验收
+```
+
+### 多应用下的约定
+
+| 场景 | 行为 |
+|---|---|
+| `build.sh` / `test.sh` | **无参 = 遍历所有应用**;给名字 = 只做这些 |
+| `bundle.sh` / `run-sim.sh` | `apps/` 只有一个应用时自动选它,**多个则必须 `--app <Name>`**(不会默默选错) |
+| `verify-all.sh` | 无参 = 遍历所有应用(各自 build → test → run-sim → ui-dump → ui-assert) |
+| CI / Release | **遍历 `apps/` 下所有应用**;Release 给每个应用生成一个 `<App>-<version>.tar.gz` |
+| Bundle ID | `com.easyapple.<appname 小写>`(由 `bundle.sh` 推导,不用手改) |
+| 版本号 | **全仓库共享** `version.properties`(见 [D8](00-decisions.md));要每应用独立版本需新决策 |
+| UI 断言 | 每个应用自带 `apps/<Name>/ui-assertions.txt`,见 [06](06-ui-acceptance.md) |
+
+### 改名残留兜底
+
+`new-app.sh` 只做字符串替换,不会动 `version.properties`(共享)、也不改 CI;生成后建议:
+
+```bash
+grep -rn EnvDemo apps/MyApp && echo "⚠️ 有残留" || echo "✅ 干净"
+```

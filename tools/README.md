@@ -8,18 +8,18 @@
 | `_common.sh` | 基座:`REPO_ROOT` / `DEVELOPER_DIR` / 日志函数 / 版本读取(被 source) |
 | `doctor.sh` | 环境自检(**第一条要跑的命令**) |
 | `bootstrap.sh` | 一次性装机引导(xcodes → Xcode 27 → iOS runtime;sudo/登录需人工) |
-| `build.sh` | `swift build`(macOS,先校验版本) |
-| `test.sh` | `swift test` |
+| `build.sh` | `swift build`(macOS,先校验版本;无参 = 遍历所有应用) |
+| `test.sh` | `swift test`(无参 = 遍历所有应用) |
 | `bundle.sh` | **原生打包**:拼 `.app`(macOS / iOSSimulator)+ ad-hoc 签名 |
 | `run-sim.sh` | 打包并在 iOS 模拟器运行(boot→install→launch,可选截图) |
 | `sim.sh` | `simctl` 常用操作封装 |
 | `ui-dump.sh` | 截图验收(截图为先,D7) |
 | `ui-scan.sh` | **文本级验收**:截图 → 原生 OCR(Apple Vision)→ 文本/JSON |
-| `ui-assert.sh` | **文本级断言**(可进 CI):`--contains` / `--not-contains` |
+| `ui-assert.sh` | **文本级断言**(可进 CI):`--contains` / `--not-contains` / `--app <Name>`(读 `apps/<Name>/ui-assertions.txt`) |
 | `uiscan.swift` | `ui-scan` 用的原生 OCR 引擎(被 `_common.sh` 编译缓存,不单独跑) |
-| `new-app.sh` | 以 EnvDemo 为模板生成 `apps/<Name>/` |
+| `new-app.sh` | 以 EnvDemo 为模板生成 `apps/<Name>/`(克隆式,生成后自己重写 Sources) |
 | `sync-version.sh` | 版本唯一来源(D8)输出 / 校验 |
-| `verify-all.sh` | 总验收:doctor → sync-version → build → test → run-sim → ui-dump → ui-assert |
+| `verify-all.sh` | 总验收:遍历 `apps/` 下所有应用(doctor → sync-version → 每应用 build → test → run-sim → ui-dump → ui-assert) |
 | `release.sh` | Conventional Commits → SemVer;改版本 / 打 tag |
 | `open-unsigned-app.sh` | 打开 ad-hoc(未真实签名)产物:去 Gatekeeper 隔离 + 启动(发布包附带) |
 
@@ -39,6 +39,9 @@ tools/release.sh --dry-run                  # 看下一个版本号
 
 ## 约定
 
+- **多应用**:应用都在 `apps/<Name>/`(`new-app.sh` 生成)。`build.sh` / `test.sh` / `verify-all.sh`
+  无参 = 遍历全部;`bundle.sh` / `run-sim.sh` 在只有一个应用时自动选,多个则必须 `--app <Name>`。
+  新建应用 / 多应用约定见 [docs/02](../docs/02-swiftpm-project-conventions.md#6-新建应用多应用支持)。
 - `bundle.sh --platform` 支持 `macOS`(默认)与 `iOSSimulator`。
 - iOS 构建命令:`xcrun swift build -c release --triple arm64-apple-ios-simulator --sdk <iphonesimulator sdk>`;
   产物在 `.build/out/Products/Release-iphonesimulator/`。

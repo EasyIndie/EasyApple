@@ -2,14 +2,15 @@
 # tools/run-sim.sh — 打包并在 iOS 模拟器上运行(一条命令闭环)
 #
 # 用法:
-#   tools/run-sim.sh                          # 默认设备 iPhone 17
+#   tools/run-sim.sh                          # 默认设备 iPhone 17 + 默认应用
+#   tools/run-sim.sh --app MyApp              # 指定应用(apps/ 下多个应用时必填)
 #   tools/run-sim.sh --device "iPhone 18 Pro"
 #   tools/run-sim.sh --no-bundle              # 复用已有 .app
 #   tools/run-sim.sh --screenshot /tmp/a.png  # 启动后截图
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
-APP_NAME="EnvDemo"
+APP_NAME=""
 DEVICE_NAME="${SIM_DEVICE:-iPhone 17}"
 DO_BUNDLE=1
 SHOT=""
@@ -23,6 +24,8 @@ while [ $# -gt 0 ]; do
     *) die "未知参数: $1" ;;
   esac
 done
+
+[ -n "$APP_NAME" ] || APP_NAME="$(default_app)"
 
 BUNDLE="$REPO_ROOT/apps/$APP_NAME/.build/bundle/$APP_NAME.app"
 BUNDLE_ID="com.easyapple.$(printf '%s' "$APP_NAME" | tr '[:upper:]' '[:lower:]')"

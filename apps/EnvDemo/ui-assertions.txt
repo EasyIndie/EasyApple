@@ -1,0 +1,14 @@
+# apps/<Name>/ui-assertions.txt — 该应用的 UI 文本断言(截图 → 原生 OCR,见 docs/06)
+#
+# 语法:
+#   +串  必须出现(contains)
+#   -串  必须不出现(not-contains)
+#   裸串 等同 +串
+#   #    注释;空行忽略
+#
+# 注意:OCR 是**有损**识别,断言串要选**稳定、无歧义**的(ASCII 优先),
+#       别用容易认错的(实测 `iPhone 17` 可能被识成 `1Phone 17`)。
+#
+# EnvDemo 首页会显示 架构 / 内存,这两个串稳定可识别:
++arm64
++GB

@@ -7,6 +7,7 @@
 # 用法:
 #   tools/ui-assert.sh --contains "arm64" --contains "模拟器"
 #   tools/ui-assert.sh --not-contains "Error"
+#   tools/ui-assert.sh --app EnvDemo                         # 读 apps/EnvDemo/ui-assertions.txt
 #   tools/ui-assert.sh --input /tmp/a.png --contains "..."   # 复用已有截图
 #   tools/ui-assert.sh --device "iPhone 17" --contains "..."
 # 退出码:0 全部通过;1 有断言失败
@@ -15,6 +16,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 DEVICE="${SIM_DEVICE:-iPhone 17}"
 INPUT=""
+APP=""
 CONTAINS=()
 NOT_CONTAINS=()
 
@@ -22,14 +24,31 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --device) DEVICE="$2"; shift 2 ;;
     --input) INPUT="$2"; shift 2 ;;
+    --app) APP="$2"; shift 2 ;;
     --contains) CONTAINS+=("$2"); shift 2 ;;
     --not-contains) NOT_CONTAINS+=("$2"); shift 2 ;;
     *) die "未知参数: $1" ;;
   esac
 done
 
+# --app <Name>:从 apps/<Name>/ui-assertions.txt 读断言
+#   每行:+串=必须包含 / -串=必须不包含 / 裸串=包含 / # 与空行=注释
+if [ -n "$APP" ]; then
+  AF="$REPO_ROOT/apps/$APP/ui-assertions.txt"
+  [ -f "$AF" ] || die "找不到断言文件: $AF"
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%$'\r'}"
+    case "$line" in ''|'#'*) continue ;; esac
+    case "$line" in
+      -*) NOT_CONTAINS+=("${line#-}") ;;
+      +*) CONTAINS+=("${line#+}") ;;
+      *)  CONTAINS+=("$line") ;;
+    esac
+  done < "$AF"
+fi
+
 if [ "$(( ${#CONTAINS[@]} + ${#NOT_CONTAINS[@]} ))" -eq 0 ]; then
-  die "至少给一个 --contains 或 --not-contains"
+  die "至少给一个 --contains / --not-contains,或用 --app <Name> 指定断言文件"
 fi
 
 if [ -z "$INPUT" ]; then

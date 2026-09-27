@@ -53,6 +53,26 @@ GPU： Apple 10S simulator GPU
 > ⚠️ **macOS 27 已知 bug**:语言列表**只认第一个**;中英混排必须 `[zh-Hans, en-US]`
 > (反过来 `[en-US, zh-Hans]` 会把中文识别成乱码)。本工具默认就用这个顺序,见 [08](08-gotchas.md)。
 
+### 3.1 每个应用自带断言文件(推荐)
+
+断言可以写进 `apps/<Name>/ui-assertions.txt`,用 `--app` 引用:
+
+```bash
+tools/ui-assert.sh --app EnvDemo
+```
+
+语法(每行一条):
+
+| 写法 | 含义 |
+|---|---|
+| `+串` | 必须出现 |
+| `-串` | 必须不出现 |
+| `裸串` | 等同 `+串` |
+| `# …` / 空行 | 注释 |
+
+`verify-all.sh` 与 CI 会**自动找**这个文件:有就跑断言,没有就 `[skip]`。
+新建应用(`tools/new-app.sh`)会自动带一份拷贝,记得改成自己 UI 的串。
+
 ## 4. 为什么不用无障碍树 / XCUITest / idb(实测否决)
 
 三条「精确」路线都试过/评估过,结论是**都不适配「无头 + 零第三方」**:
@@ -75,7 +95,8 @@ GPU： Apple 10S simulator GPU
 
 ## 6. CI
 
-`ci.yml` 的「模拟器冒烟」步骤跑 `run-sim --screenshot` 后做文本断言,截图作为 artifact 上传。
+`ci.yml` 的「模拟器冒烟 + 文本断言」步骤**遍历 `apps/` 下的每个应用**:
+`run-sim --app <Name> --screenshot` → `ui-scan` → `ui-assert --app <Name>`,截图作为 artifact 上传。
 
 > **实测**:GitHub `xcode-27-arm64` runner 是 **VM(无真 GPU/ANE**,日志有 `AppleM2ScalerParavirtDriver`),
 > `VNRecognizeTextRequest` 的 **`.accurate` 级别会失败**(`unknownError`/`nilError`),但 **`.fast` 级别可用**。

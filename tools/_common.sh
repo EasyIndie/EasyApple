@@ -72,3 +72,44 @@ is_adhoc_signed() {
   printf '%s' "$info" | grep -q 'TeamIdentifier=not set' && return 0
   return 1
 }
+
+# ---- 多应用(apps/<Name>/)支持 ----
+
+# 列出 apps/ 下所有应用(含 Package.swift 的目录),按名称排序。
+list_apps() {
+  local d
+  for d in "$REPO_ROOT"/apps/*/; do
+    [ -f "$d/Package.swift" ] || continue
+    basename "$d"
+  done | sort
+}
+
+# 解析目标应用:传了参数 → 逐个校验后输出;没传 → 输出全部应用。
+resolve_apps() {
+  local name
+  if [ "$#" -gt 0 ]; then
+    for name in "$@"; do
+      [ -f "$REPO_ROOT/apps/$name/Package.swift" ] || die "找不到应用: apps/$name"
+      printf '%s\n' "$name"
+    done
+  else
+    list_apps
+  fi
+}
+
+# 单应用场景(bundle / run-sim)的默认值:仅一个应用时用它,多个则要求 --app 显式指定。
+default_app() {
+  local apps count
+  apps="$(list_apps)"
+  count="$(printf '%s\n' "$apps" | grep -c . || true)"
+  [ "$count" -ge 1 ] || die "apps/ 下没有任何应用(先用 tools/new-app.sh <Name> 生成)"
+  if [ "$count" -gt 1 ]; then
+    die "apps/ 下有多个应用,请用 --app <Name> 指定。可选:$(printf ' %s' $apps)"
+  fi
+  printf '%s\n' "$apps" | head -1
+}
+
+# 该应用是否有 UI 断言配置(apps/<Name>/ui-assertions.txt)
+has_ui_assertions() {
+  [ -f "$REPO_ROOT/apps/${1:-}/ui-assertions.txt" ]
+}

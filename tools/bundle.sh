@@ -2,9 +2,10 @@
 # tools/bundle.sh — 原生打包:把 SwiftPM executable 拼成 .app(macOS / iOS 模拟器)
 #
 # 用法:
-#   tools/bundle.sh                        # macOS,release
+#   tools/bundle.sh                        # 打包默认应用(macOS,release)
 #   tools/bundle.sh --platform iOSSimulator
 #   tools/bundle.sh --config debug
+#   tools/bundle.sh --app MyApp            # 指定应用(apps/ 下多个应用时必填)
 #
 # 产物:apps/<App>/.build/bundle/<App>.app
 set -euo pipefail
@@ -12,7 +13,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 PLATFORM="macOS"
 CONFIG="release"
-APP_NAME="EnvDemo"
+APP_NAME=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -22,6 +23,9 @@ while [ $# -gt 0 ]; do
     *) die "未知参数: $1" ;;
   esac
 done
+
+# 未指定应用:仅有一个应用时自动用它,多个则报错要求 --app
+[ -n "$APP_NAME" ] || APP_NAME="$(default_app)"
 
 APP_DIR="$REPO_ROOT/apps/$APP_NAME"
 [ -d "$APP_DIR" ] || die "找不到 app 目录: $APP_DIR"
