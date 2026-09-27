@@ -11,7 +11,8 @@ bv="$(bundle_version_from_props)"
 
 if [ "${1:-}" = "--check" ]; then
   printf '%s' "$v" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' || die "version 不是严格 SemVer: $v"
-  hits="$(grep -rn --exclude-dir=.build --exclude-dir=.git -- "$v" "$REPO_ROOT/apps" "$REPO_ROOT/tools" 2>/dev/null || true)"
+  # 固定串匹配(-F):版本号里的 `.` 不能当正则通配符,否则含 `3` 的版本会误命中 ANSI 转义里的 `033[0`
+  hits="$(grep -rnF --exclude-dir=.build --exclude-dir=.git -- "$v" "$REPO_ROOT/apps" "$REPO_ROOT/tools" 2>/dev/null || true)"
   [ -z "$hits" ] || die "源码里出现版本字面量 $v:
 $hits"
   ok "版本校验通过: version=$v  CFBundleVersion=$bv"

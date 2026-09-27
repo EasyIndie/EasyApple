@@ -9,8 +9,6 @@
 
 ## [0.3.0] - 2026-09-27
 
-## [0.2.0] - 2026-09-27
-
 ### Added
 
 - **多应用支持**:工具链按 `apps/` 遍历。`build.sh` / `test.sh` / `verify-all.sh` 无参 = 全部应用;
@@ -18,7 +16,18 @@
   (每个应用一个 `<App>-<version>.tar.gz`)。
 - **新建应用**:`tools/new-app.sh <Name>` 按模板生成,并在生成后提示需要手改的三处。
 - **每应用 UI 断言文件**:`apps/<Name>/ui-assertions.txt` + `ui-assert.sh --app <Name>`。
+
+### Fixed
+
+- `tools/sync-version.sh` 的版本字面量检查改用**固定串匹配**(`grep -F`):此前把版本号当正则,
+  其中 `.` 可匹配任意字符,版本为 `0.3.0` 时会误命中 ANSI 转义里的 `033[0`,造成 CI 假失败。
+
+## [0.2.0] - 2026-09-27
+
+### Added
+
 - **文本级 UI 验收**(决策 D15):`tools/ui-scan.sh` / `tools/ui-assert.sh` + 原生 OCR 引擎 `tools/uiscan.swift`(Apple Vision,免授权、可无头)。
+- `verify-all` 增至 7 步;CI 冒烟步骤加入文本断言。
 - **未签名产物的便捷打开**:`tools/open-unsigned-app.sh`(去 Gatekeeper 隔离 + 启动);发布时**仅当产物是 ad-hoc 签名才附带**。
 
 ### Fixed
