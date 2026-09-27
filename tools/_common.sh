@@ -61,3 +61,14 @@ ensure_uiscan() {
   fi
   printf '%s' "$bin"
 }
+
+# 判断 .app 是否为 ad-hoc(未真实)签名:是→返回 0,否→返回 1。
+# 真实签名(Developer ID / App Store)会有 Team ID;ad-hoc 则为 Signature=adhoc / TeamIdentifier=not set。
+is_adhoc_signed() {
+  local app="$1" info
+  [ -d "$app" ] || return 1
+  info="$(codesign -dv --verbose=4 "$app" 2>&1 || true)"
+  printf '%s' "$info" | grep -q 'Signature=adhoc' && return 0
+  printf '%s' "$info" | grep -q 'TeamIdentifier=not set' && return 0
+  return 1
+}

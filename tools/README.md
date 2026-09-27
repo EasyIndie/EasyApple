@@ -21,6 +21,7 @@
 | `sync-version.sh` | 版本唯一来源(D8)输出 / 校验 |
 | `verify-all.sh` | 总验收:doctor → sync-version → build → test → run-sim → ui-dump → ui-assert |
 | `release.sh` | Conventional Commits → SemVer;改版本 / 打 tag |
+| `open-unsigned-app.sh` | 打开 ad-hoc(未真实签名)产物:去 Gatekeeper 隔离 + 启动(发布包附带) |
 
 ## 常用
 
