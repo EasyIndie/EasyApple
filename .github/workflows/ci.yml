@@ -100,6 +100,8 @@ jobs:
           name: simulator-screenshot
           path: .tmp/*.png
           if-no-files-found: ignore
+          # .tmp 是隐藏目录,upload-artifact v4 默认跳过隐藏文件
+          include-hidden-files: true
 
       - name: 上传 iOS 单测结果
         if: always()
@@ -108,3 +110,5 @@ jobs:
           name: ios-test-result
           path: apps/*/.build/ios-test/result.xcresult
           if-no-files-found: ignore
+          # .build 同样是隐藏目录
+          include-hidden-files: true
