@@ -183,6 +183,11 @@ xcodebuild analyze -scheme EnvDemoCore -destination 'platform=iOS Simulator,…'
 > **P0 已于 2026-10-19 落地**(实测见 §1.1 / §1.3 与 [docs/06](../06-ui-acceptance.md)):
 > `tools/test-ios.sh` 与 `ui-dump`/`ui-scan`/`ui-assert` 的截图确定性。
 
+**CI 实测(2026-10-19,`xcode-27` runner)**:iOS 运行时单测冷跑 **413 s / 480 s**,
+加 `actions/cache`(`apps/*/.build` + SwiftPM 缓存,111 MB)后命中缓存 **173 s**,
+整条 CI 由 7–14 min 降到 **6.2 min**;纯文档提交(`**/*.md`、`docs/**`)不触发 CI。
+
+
 | 优先级 | 动作 | 收益 | 成本 | 状态 |
 |---|---|---|---|---|
 | **P0** | `tools/ui-dump.sh` 截图前固定状态栏(可选外观/字号),截完恢复 | OCR/视觉断言不再被时间电量干扰 | ~10 行 | ✅ 已落地(延伸到 `ui-scan`/`ui-assert`) |
