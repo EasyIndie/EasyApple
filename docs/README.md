@@ -25,6 +25,8 @@
 | [research/02-cross-platform-dev.md](research/02-cross-platform-dev.md) | 跨平台开发能力(首期不采用) |
 | [research/03-simulator-cross-platform.md](research/03-simulator-cross-platform.md) | **模拟器跨平台可行性(核心否定结论)** |
 | [research/04-swiftpm-packaging.md](research/04-swiftpm-packaging.md) | SwiftPM 打包(已改原生脚本,swift-bundler 仅备选对照) |
+| [research/05-virtual-iphone-vphone.md](research/05-virtual-iphone-vphone.md) | 虚拟 iPhone(vphone):原理、限制、本机可行性(**不纳入主链路**) |
+| [research/06-automated-testing-acceptance.md](research/06-automated-testing-acceptance.md) | 自动化测试/验收六层分级(模拟器单测免工程文件、截图确定性、性能基线) |
 
 > `research/` 与执行期文档的区别:research 是**规划期调研(带「怎么复核」)**;
 > 执行期文档是**实测后**的结论与用法。同一主题两处都有是故意的,不要合并。

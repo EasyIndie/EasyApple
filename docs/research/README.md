@@ -21,6 +21,8 @@ EasyAndroid 的 `docs/` 是「实测过的结论」。EasyApple 目前**还没�
 | [02-cross-platform-dev.md](02-cross-platform-dev.md) | 跨平台开发能力 | Swift 语言已跨平台(含 Android SDK),但 **SwiftUI 不可移植**;无 Mac 可用 Theos/xtool 出**设备包**(**首期不采用**) |
 | [03-simulator-cross-platform.md](03-simulator-cross-platform.md) | **模拟器跨平台可行性** | **原理上不可行**(模拟器是 macOS 原生 App);跨平台 = **远程 macOS** |
 | [04-swiftpm-packaging.md](04-swiftpm-packaging.md) | SwiftPM 打不出包怎么办 | **已改自写原生打包脚本**;swift-bundler 仅备选对照;xtool 是设备向备选 |
+| [05-virtual-iphone-vphone.md](05-virtual-iphone-vphone.md) | 虚拟 iPhone(vphone,2026-10 快照) | **不纳入构建/验收链路**;需改宿主 SIP、单机约 45 GB、`devicectl` 不可用;M1 Air 8 GB/24 GB 可用空间不达标 |
+| [06-automated-testing-acceptance.md](06-automated-testing-acceptance.md) | 自动化测试/验收方案(2026-10 快照) | 六层分级;**SwiftPM 包可直接在模拟器上跑单测(实测,无需 .xcodeproj)**;交互/精确树仍只走 XCUITest(需工程,后置) |
 
 ## 关键否决清单(避免重复调研)
 
@@ -36,3 +38,5 @@ EasyAndroid 的 `docs/` 是「实测过的结论」。EasyApple 目前**还没�
 | 日期 | 变更 |
 |---|---|
 | 2026-09-26 | 初版(规划期,Windows 上完成) |
+| 2026-10-19 | 新增 05:虚拟 iPhone(vphone)调研;结论为「不纳入主链路,仅作将来复评依据」 |
+| 2026-10-19 | 新增 06:自动化测试/验收方案(Xcode 27 实测);关键结论「SwiftPM 包可在模拟器跑单测,无需工程文件」 |
