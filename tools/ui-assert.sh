@@ -10,6 +10,8 @@
 #   tools/ui-assert.sh --app EnvDemo                         # 读 apps/EnvDemo/ui-assertions.txt
 #   tools/ui-assert.sh --input /tmp/a.png --contains "..."   # 复用已有截图
 #   tools/ui-assert.sh --device "iPhone 17" --contains "..."
+#   tools/ui-assert.sh --appearance dark --contains "..."    # 深色模式断言
+#   tools/ui-assert.sh --no-fix-status --contains "..."      # 不固定状态栏(默认固定)
 # 退出码:0 全部通过;1 有断言失败
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
@@ -17,6 +19,9 @@ source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 DEVICE="${SIM_DEVICE:-iPhone 17}"
 INPUT=""
 APP=""
+FIX_STATUS=1
+APPEARANCE=""
+CONTENT_SIZE=""
 CONTAINS=()
 NOT_CONTAINS=()
 
@@ -25,11 +30,16 @@ while [ $# -gt 0 ]; do
     --device) DEVICE="$2"; shift 2 ;;
     --input) INPUT="$2"; shift 2 ;;
     --app) APP="$2"; shift 2 ;;
+    --appearance) APPEARANCE="$2"; shift 2 ;;
+    --content-size) CONTENT_SIZE="$2"; shift 2 ;;
+    --no-fix-status) FIX_STATUS=0; shift ;;
     --contains) CONTAINS+=("$2"); shift 2 ;;
     --not-contains) NOT_CONTAINS+=("$2"); shift 2 ;;
     *) die "未知参数: $1" ;;
   esac
 done
+
+case "$APPEARANCE" in ''|light|dark) ;; *) die "--appearance 只支持 light / dark" ;; esac
 
 # --app <Name>:从 apps/<Name>/ui-assertions.txt 读断言
 #   每行:+串=必须包含 / -串=必须不包含 / 裸串=包含 / # 与空行=注释
@@ -55,7 +65,11 @@ if [ -z "$INPUT" ]; then
   UDID="$(simctl_udid "$DEVICE")"
   mkdir -p "$REPO_ROOT/.tmp"
   INPUT="$REPO_ROOT/.tmp/ui-assert-$(date +%Y%m%d-%H%M%S).png"
+  trap ui_env_restore EXIT
+  ui_env_lock "$UDID" "$FIX_STATUS" "$APPEARANCE" "$CONTENT_SIZE"
   xcrun simctl io "$UDID" screenshot "$INPUT" >/dev/null
+  ui_env_restore
+  trap - EXIT
   note "截图: $INPUT" >&2
 fi
 [ -f "$INPUT" ] || die "找不到图片: $INPUT"

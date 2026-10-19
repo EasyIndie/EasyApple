@@ -62,6 +62,78 @@ ensure_uiscan() {
   printf '%s' "$bin"
 }
 
+# ---- 截图确定性:固定状态栏/外观/字号,结束时恢复 ----
+#
+# 原因:状态栏时间、电量、信号会进入截图与 OCR 文本,导致断言漂移(如每次都不同的 `01:22`)。
+# 用法:
+#   trap ui_env_restore EXIT
+#   ui_env_lock "$UDID" "$FIX_STATUS" "$APPEARANCE" "$CONTENT_SIZE"
+#   … screenshot …
+#   ui_env_restore            # 幂等;trap 再跑一次也无害
+# 参数:FIX_STATUS=1 固定 09:41/满电/满格;APPEARANCE=light|dark;CONTENT_SIZE=动态字体档位。
+# 设备没启动时自动跳过(不改任何状态)。
+UI_LOCKED=0
+UI_LOCK_UDID=""
+UI_LOCK_STATUS_HAD_PRIOR=0
+UI_LOCK_APPEARANCE=""
+UI_LOCK_APPEARANCE_PREV=""
+UI_LOCK_CONTENT_SIZE=""
+UI_LOCK_CONTENT_SIZE_PREV=""
+
+ui_env_lock() {
+  local udid="${1:-}" fix_status="${2:-1}" appearance="${3:-}" content_size="${4:-}"
+  [ -n "$udid" ] || return 0
+  UI_LOCK_UDID="$udid"
+  if ! xcrun simctl list devices | grep -F "$udid" | grep -q '(Booted)'; then
+    note "设备未启动,跳过截图环境固定(先跑 tools/run-sim.sh 或 tools/sim.sh boot)" >&2
+    return 0
+  fi
+  UI_LOCKED=1
+  if [ "$fix_status" = 1 ]; then
+    local prior
+    prior="$(xcrun simctl status_bar "$udid" list 2>/dev/null || true)"
+    # 头两行是 "Current Status Bar Overrides:" + 分隔线;之后还有内容说明原本就有覆盖
+    if printf '%s\n' "$prior" | sed -n '3,$p' | grep -q .; then
+      UI_LOCK_STATUS_HAD_PRIOR=1
+    fi
+    xcrun simctl status_bar "$udid" override \
+      --time "09:41" --dataNetwork wifi --wifiBars 3 --cellularBars 4 \
+      --batteryState charged --batteryLevel 100 >/dev/null
+  fi
+  if [ -n "$appearance" ]; then
+    UI_LOCK_APPEARANCE="$appearance"
+    UI_LOCK_APPEARANCE_PREV="$(xcrun simctl ui "$udid" appearance 2>/dev/null || true)"
+    xcrun simctl ui "$udid" appearance "$appearance" >/dev/null
+  fi
+  if [ -n "$content_size" ]; then
+    UI_LOCK_CONTENT_SIZE="$content_size"
+    UI_LOCK_CONTENT_SIZE_PREV="$(xcrun simctl ui "$udid" content_size 2>/dev/null || true)"
+    xcrun simctl ui "$udid" content_size "$content_size" >/dev/null
+  fi
+}
+
+ui_env_restore() {
+  [ "$UI_LOCKED" = 1 ] || return 0
+  UI_LOCKED=0
+  local udid="$UI_LOCK_UDID"
+  if [ -n "$UI_LOCK_APPEARANCE" ]; then
+    case "$UI_LOCK_APPEARANCE_PREV" in
+      light|dark) xcrun simctl ui "$udid" appearance "$UI_LOCK_APPEARANCE_PREV" >/dev/null 2>&1 || true ;;
+    esac
+  fi
+  if [ -n "$UI_LOCK_CONTENT_SIZE" ]; then
+    case "$UI_LOCK_CONTENT_SIZE_PREV" in
+      ''|unknown|unsupported) : ;;
+      *) xcrun simctl ui "$udid" content_size "$UI_LOCK_CONTENT_SIZE_PREV" >/dev/null 2>&1 || true ;;
+    esac
+  fi
+  if [ "$UI_LOCK_STATUS_HAD_PRIOR" = 0 ]; then
+    xcrun simctl status_bar "$udid" clear >/dev/null 2>&1 || true
+  else
+    note "状态栏原本已有覆盖:本次改写了时间/信号/电量,需要时手动 \`xcrun simctl status_bar <udid> clear\`" >&2
+  fi
+}
+
 # 判断 .app 是否为 ad-hoc(未真实)签名:是→返回 0,否→返回 1。
 # 真实签名(Developer ID / App Store)会有 Team ID;ad-hoc 则为 Signature=adhoc / TeamIdentifier=not set。
 is_adhoc_signed() {

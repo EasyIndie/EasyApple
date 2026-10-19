@@ -83,3 +83,31 @@
 - **校验**:`printf '\\033[0m\n' | grep -c '0.3.0'` → 旧写法命中;`grep -cF '0.3.0'` → 不命中。
 - **解法**:改用固定串匹配 `grep -F`。已修。
 - **教训**:凡「把变量当模式」之处都要 `-F`(或显式转义)。另:给该检查写注释时也别把版本号写进去——会自撞(本次真撞了)。
+
+## 14. `xcodebuild test -scheme <目标名>` 报 not configured for the test action
+
+- **症状**:`xcodebuild test -scheme EnvDemoCore -destination 'platform=iOS Simulator,name=iPhone 17'`
+  → `xcodebuild: error: Scheme EnvDemoCore is not currently configured for the test action.`
+- **原因**:SwiftPM 包在 Xcode 里会生成多个 scheme;只有**聚合 scheme `<包名>-Package`** 带 test action
+  (目标 scheme 只负责 build)。
+- **解法**:`-scheme EnvDemo-Package`。用 `xcodebuild -list -json` 确认包名;`tools/test-ios.sh` 已封装。
+- **附带坑**:同名模拟器在多个 runtime(如 iOS 26.4.1 与 27.0)各有一个时,
+  `-destination 'platform=iOS Simulator,name=iPhone 17'` 会「多匹配」;`tools/` 统一用 `id=<UDID>`。
+
+## 15. 纯 SwiftPM 的单测跑不了真机(tool-hosted testing)
+
+- **症状**:`xcodebuild test -scheme EnvDemo-Package -destination 'id=<真机 UDID>'` →
+  `Cannot test target "EnvDemoCoreTests" on "iPhoneSE3": Tool-hosted testing is unavailable on device destinations.`
+- **原因**:SwiftPM 单测是 **tool-hosted**(挂在 xctest runner 上),iOS 只在模拟器支持;
+  真机测试必须挂 host app(于是必须有 `.xcodeproj`)。
+- **解法**:iOS 运行时验证用模拟器(`tools/test-ios.sh`);真机只做冒烟
+  (`xcrun devicectl device install/launch/capture screenshot`),真机自动化测试要工程文件
+  (见 [research/06](research/06-automated-testing-acceptance.md) §2.6)。
+
+## 16. 截图里状态栏时间每次都变,OCR 断言漂移
+
+- **症状**:`ui-scan` 输出第一行是 `01:22` 这类时间,截图对比与文本断言跟着漂。
+- **原因**:模拟器状态栏的时间/电量/信号是真实时钟,不固定。
+- **解法**:截图前 `xcrun simctl status_bar <udid> override --time 09:41 ...`,截完 `clear`。
+  `ui-dump` / `ui-scan` / `ui-assert` 已内置(`_common.sh` 的 `ui_env_lock` / `ui_env_restore`,
+  截完自动恢复);要保留真实状态时加 `--no-fix-status`。

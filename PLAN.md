@@ -101,6 +101,8 @@
 - [x] **C12** `tools/verify-all.sh` —— 总验收(✅ 6/6 通过:doctor/sync-version/build/test/run-sim/ui-dump)
 - [x] **C13** `tools/release.sh` —— Conventional Commits → SemVer(改版本 + 打 tag)
 - [x] **C14** `tools/README.md` —— 脚本索引
+- [x] **C15** `tools/test-ios.sh` —— iOS 运行时单测(SwiftPM 聚合 scheme `<包名>-Package`,无需 `.xcodeproj`;✅ 实测 3 通过/0 失败)
+- [x] **C16** 截图确定性 —— `ui-dump`/`ui-scan`/`ui-assert` 截图前固定状态栏(可选外观/字号)并恢复(✅ 实测)
 
 ---
 
@@ -160,6 +162,7 @@
 | 2026-09-26 | Phase E–F 完成:执行期文档 01–08 + 静态自检 + verify-all 6/6 | — |
 | 2026-09-27 | 发布首个版本 0.1.0;修 release.sh 轻量标签 bug | 验证 release 流水线 |
 | 2026-09-27 | 新增文本级验收(D15):原生 OCR `ui-scan`/`ui-assert`;verify-all 7 步 | 无障碍树路线与无头冲突 |
+| 2026-10-19 | 新增 iOS 运行时单测 `test-ios.sh` + 截图确定性(C15/C16) | [research/06](docs/research/06-automated-testing-acceptance.md) 的 P0 落地 |
 
 ---
 

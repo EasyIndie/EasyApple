@@ -8,6 +8,7 @@
 |---|---|---|
 | 渲染是否对 | 截图(`simctl io screenshot`) | [D7](00-decisions.md) 截图为先 |
 | 文本是否对 | **原生 OCR**(Apple Vision) | **D15** |
+| 逻辑在 iOS 运行时是否对 | `xcodebuild test`(SwiftPM 包,无需工程) | 已落地,见 §8 |
 | 精确树 / 交互 | 未采用(需 XCUITest 或 idb) | 后置,见 §5 |
 
 ## 2. 截图(已验证)
@@ -18,6 +19,26 @@ tools/ui-dump.sh --out /tmp/envdemo.png          # 只截图
 ```
 
 实测:iPhone 17 截图分辨率 **1206×2622 px**(对应 393×852 pt)。
+
+### 2.1 确定性截图(状态栏 / 外观 / 字号)
+
+状态栏时间、电量、信号会进入画面与 OCR 文本(以前每次都不同,如 `01:22`),
+导致断言与截图对比漂移。`ui-dump` / `ui-scan` / `ui-assert` 现在会在截图前自动固定、
+截完恢复(`_common.sh` 的 `ui_env_lock` / `ui_env_restore`):
+
+```bash
+tools/ui-dump.sh --out /tmp/a.png                 # 默认:状态栏固定 09:41/满电/满格,截完复原
+tools/ui-dump.sh --appearance dark --out /tmp/b.png          # 深色模式
+tools/ui-dump.sh --content-size accessibility-large --out /tmp/c.png   # 大字号(无障碍)
+tools/ui-scan.sh --appearance dark                # OCR 也可指定
+tools/ui-assert.sh --app EnvDemo --no-fix-status  # 不想动状态栏时
+```
+
+> 固定只对**已启动**的设备生效;设备没启动时跳过(截图本身也要求 booted)。
+
+实测(2026-10-19):固定后截图状态栏为 `09:41`,OCR 文本第一行稳定为 `09:41`;
+截图结束后 `simctl status_bar list` 恢复为空,外观恢复为原值。
+若模拟器**原本就有**状态栏覆盖,工具会保留并提示手动 `simctl status_bar <udid> clear`。
 
 ## 3. 文本级验收:原生 OCR(已验证,D15)
 
@@ -80,7 +101,7 @@ tools/ui-assert.sh --app EnvDemo
 | 路线 | 否决原因(实测) |
 |---|---|
 | **宿主 AX API**(xctree / iosef 的做法) | 需 `AXIsProcessTrusted()==true`(本机实测 **false**,要人工到系统设置里授权);且它读的是 **Simulator.app 宿主进程**的树 —— `simctl boot` 无头启动时实测 `simulator app count: 0`,**根本没有宿主进程**。与「无头/CI」天然冲突。 |
-| **XCUITest** | 是 Apple 官方的无头 UI 测试方案(不需要 GUI/授权),但**需要 `.xcodeproj` + UI Test target**,SwiftPM 不支持 UI 测试 bundle → 与 [D4/D5](00-decisions.md)「不生成 `.xcodeproj`」冲突。 |
+| **XCUITest** | 是 Apple 官方的无头 UI 测试方案(不需要 GUI/授权),但**需要 `.xcodeproj` + UI Test target**,SwiftPM 不支持 UI 测试 bundle → 与 [D4/D5](00-decisions.md)「不生成 `.xcodeproj`」冲突。补充(2026-10):SDK 里的模块已叫 `XCUIAutomation`,`XCUIApplication(bundleIdentifier:)` 可驱动**已安装的任意 App** —— 意味着临时工程只需一个 UI test target、不必接管 App 构建;详见 [research/06](research/06-automated-testing-acceptance.md) §2.5(**未在本仓库验证**)。 |
 | **idb** | 第三方(与「只用原生工具」冲突),且 [D7](00-decisions.md) 已明确不用。 |
 
 → 因此文本级验收选 **原生 OCR**(D15):免授权、可无头、可进 CI。
@@ -108,3 +129,30 @@ tools/ui-assert.sh --app EnvDemo
 - OCR 只验「屏幕上有没有这段文字」,不验位置关系、不验交互。
 - 首次(冷)识别慢约 90 s;断言串必须用稳定 token。
 - 截图/OCR 在模拟器上可靠(模拟器无 Android 的 `FLAG_SECURE` 类限制)。
+- 状态栏/外观/字号已可固定,但**动画、网络数据、系统弹窗**仍可能让截图不稳定 ——
+  需要时用启动参数/预授权(`simctl privacy`)把 App 置入确定状态。
+
+## 8. iOS 运行时单测(SwiftPM 包,无需 `.xcodeproj`)
+
+`tools/test.sh` 只在**宿主机 macOS** 上跑 `swift test`;要靠 UIKit/真机语义的代码得在
+iOS 运行时里跑。Xcode 会为 SwiftPM 包自动生成聚合 scheme **`<包名>-Package`**,它带 test action:
+
+```bash
+tools/test-ios.sh                      # 遍历 apps/,跑在默认模拟器
+tools/test-ios.sh EnvDemo --coverage   # 覆盖率
+tools/test-ios.sh --device "iPhone 17" --filter EnvDemoCoreTests/EnvironmentReportTests
+```
+
+实测(2026-10-19,Xcode 27.0 / iOS 26.4.1 模拟器):`EnvDemo` **3 通过 / 0 失败**,
+增量 ≈ 16 s;产物在 `apps/<App>/.build/ios-test/result.xcresult`,可直接:
+
+```bash
+xcrun xcresulttool get test-results summary --path apps/EnvDemo/.build/ios-test/result.xcresult
+xcrun xccov view --report apps/EnvDemo/.build/ios-test/result.xcresult   # 需 --coverage
+```
+
+> ⚠️ 不能用 `-scheme EnvDemoCore`:会报 *"Scheme is not currently configured for the test action"*。
+> ⚠️ 真机不行:纯 SwiftPM 的单测是 tool-hosted,报 *"Tool-hosted testing is unavailable on device
+> destinations"* —— 真机单测要 host app(即工程文件)。见 [08](08-gotchas.md)。
+> 更完整的方案分层(性能基线 `measure`/`xctrace`、XCUITest 取舍、真机)见
+> [research/06](research/06-automated-testing-acceptance.md)。

@@ -7,6 +7,21 @@
 
 ## [Unreleased]
 
+### Added
+
+- **iOS 运行时单测**:`tools/test-ios.sh`。用 Xcode 为 SwiftPM 包自动生成的聚合 scheme
+  `<包名>-Package`，在 iOS 模拟器里跑单测（不再只靠宿主机 `swift test`），支持
+  `--device` / `--filter` / `--coverage`；结果落在 `apps/<App>/.build/ios-test/result.xcresult`。
+- **截图确定性**：`ui-dump` / `ui-scan` / `ui-assert` 截图前自动固定状态栏（09:41 / 满电 / 满格），
+  并可选 `--appearance light|dark`、`--content-size <档位>`，截完自动恢复；
+  `--no-fix-status` 可关闭。OCR 断言不再被时间/电量影响。
+- 调研文档：[research/06 自动化测试/验收方案](docs/research/06-automated-testing-acceptance.md)
+  （六层分级 + 本机实测）、[research/05 虚拟 iPhone(vphone)](docs/research/05-virtual-iphone-vphone.md)。
+
+### Changed
+
+- `verify-all` 的截图/断言步骤隐式获得确定性环境（无需改调用）。
+
 ## [0.3.0] - 2026-09-27
 
 ### Added
