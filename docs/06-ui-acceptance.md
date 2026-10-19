@@ -126,6 +126,9 @@ tools/ui-assert.sh --app EnvDemo
 新增的 iOS 单测步骤是**阻塞的**(单测确定性强,失败就该挂);冒烟/OCR 仍 `continue-on-error`,
 避免 runner 环境差异把 CI 拖红。
 
+CI 还会缓存 `apps/*/.build`(含 iOS 模拟器 DerivedData)与 SwiftPM 包缓存,源码没变时
+直接复用;纯文档提交(`**/*.md`、`docs/**`、`LICENSE`)不触发 CI。
+
 > **实测**:GitHub `xcode-27-arm64` runner 是 **VM(无真 GPU/ANE**,日志有 `AppleM2ScalerParavirtDriver`),
 > `VNRecognizeTextRequest` 的 **`.accurate` 级别会失败**(`unknownError`/`nilError`),但 **`.fast` 级别可用**。
 > `uiscan` 的多配置回退链会自动降级到 `.fast`,所以 **CI 上文本断言真的跑通了**(实测 `arm64`/`GB` 均通过)。

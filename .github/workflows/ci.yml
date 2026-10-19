@@ -3,7 +3,17 @@ name: CI
 on:
   push:
     branches: [main]
+    # 纯文档改动不跑 CI(macOS runner 是 10× 计费);改代码/脚本/工作流仍跑。
+    # ⚠️ 若以后给 main 开了 required status checks,文档 PR 会因不产生检查而卡住。
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
   pull_request:
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
   workflow_dispatch:
 
 # macOS runner 是 10× 计费倍率;显式 pin(见决策 D9),不用 macos-latest。
@@ -15,6 +25,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: 缓存构建产物(SwiftPM + iOS 模拟器 DerivedData)
+        uses: actions/cache@v4
+        with:
+          path: |
+            apps/*/.build
+            ~/Library/Caches/org.swift.swiftpm
+            ~/Library/org.swift.swiftpm
+          # 源码/依赖/脚本变了就换 key;restore-keys 保底复用上一次的增量结果
+          key: ${{ runner.os }}-${{ runner.arch }}-xcode-${{ hashFiles('apps/**/Package.swift', 'apps/**/Package.resolved', 'apps/**/Sources/**/*.swift', 'apps/**/Tests/**/*.swift', 'tools/**/*.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-xcode-
 
       - name: 提交信息规范(Conventional Commits)
         if: github.event_name == 'pull_request'

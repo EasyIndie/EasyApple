@@ -22,6 +22,8 @@
 
 - `verify-all` 的截图/断言步骤隐式获得确定性环境（无需改调用）。
 - CI:新增「测试(iOS 运行时)」阻塞步骤(`tools/test-ios.sh`),并上传 `result.xcresult` artifact。
+- CI 提速:缓存 `apps/*/.build`(含 iOS 模拟器 DerivedData)与 SwiftPM 包缓存,
+  key 按源码/依赖哈希;纯文档提交(`**/*.md`、`docs/**`、`LICENSE`)不再触发 CI。
 
 ### Fixed
 

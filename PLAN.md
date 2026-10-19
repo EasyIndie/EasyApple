@@ -164,6 +164,7 @@
 | 2026-09-27 | 新增文本级验收(D15):原生 OCR `ui-scan`/`ui-assert`;verify-all 7 步 | 无障碍树路线与无头冲突 |
 | 2026-10-19 | 新增 iOS 运行时单测 `test-ios.sh` + 截图确定性(C15/C16) | [research/06](docs/research/06-automated-testing-acceptance.md) 的 P0 落地 |
 | 2026-10-19 | CI 增加「测试(iOS 运行时)」阻塞步骤 + 上传 xcresult | 让 C15 的新工具在 CI 里被守住;首跑已验证 |
+| 2026-10-19 | CI 加构建缓存 + 纯文档改动跳过 CI | 10× 计费下省时间/额度 |
 
 ---
 
