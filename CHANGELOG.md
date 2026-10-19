@@ -23,6 +23,12 @@
 - `verify-all` 的截图/断言步骤隐式获得确定性环境（无需改调用）。
 - CI:新增「测试(iOS 运行时)」阻塞步骤(`tools/test-ios.sh`),并上传 `result.xcresult` artifact。
 
+### Fixed
+
+- CI artifact 从未真正上传:`upload-artifact@v4` 默认 `include-hidden-files: false`,
+  而截图在 `.tmp/`、xcresult 在 `.build/`(都是隐藏目录)。两条上传步骤已显式打开该开关,
+  仓库产物数从 0 恢复为 2(截图 + iOS 单测结果)。
+
 ## [0.3.0] - 2026-09-27
 
 ### Added
