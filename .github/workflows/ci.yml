@@ -62,6 +62,9 @@ jobs:
       - name: 测试
         run: bash tools/test.sh
 
+      - name: 测试(iOS 运行时,无需 .xcodeproj)
+        run: bash tools/test-ios.sh
+
       - name: 模拟器冒烟 + 文本断言(遍历所有应用)
         continue-on-error: true
         run: |
@@ -96,4 +99,12 @@ jobs:
         with:
           name: simulator-screenshot
           path: .tmp/*.png
+          if-no-files-found: ignore
+
+      - name: 上传 iOS 单测结果
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-result
+          path: apps/*/.build/ios-test/result.xcresult
           if-no-files-found: ignore

@@ -21,6 +21,7 @@
 ### Changed
 
 - `verify-all` 的截图/断言步骤隐式获得确定性环境（无需改调用）。
+- CI:新增「测试(iOS 运行时)」阻塞步骤(`tools/test-ios.sh`),并上传 `result.xcresult` artifact。
 
 ## [0.3.0] - 2026-09-27
 

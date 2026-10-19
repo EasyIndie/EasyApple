@@ -116,8 +116,15 @@ tools/ui-assert.sh --app EnvDemo
 
 ## 6. CI
 
-`ci.yml` 的「模拟器冒烟 + 文本断言」步骤**遍历 `apps/` 下的每个应用**:
-`run-sim --app <Name> --screenshot` → `ui-scan` → `ui-assert --app <Name>`,截图作为 artifact 上传。
+`ci.yml` 现在跑三层测试/验收:
+
+1. `tools/test.sh` —— 宿主机 `swift test`(快);
+2. `tools/test-ios.sh` —— iOS 模拟器里的单测(无需 `.xcodeproj`),结果作 artifact 上传;
+3. 「模拟器冒烟 + 文本断言」**遍历 `apps/` 下的每个应用**:
+   `run-sim --app <Name> --screenshot` → `ui-scan` → `ui-assert --app <Name>`,截图作为 artifact 上传。
+
+新增的 iOS 单测步骤是**阻塞的**(单测确定性强,失败就该挂);冒烟/OCR 仍 `continue-on-error`,
+避免 runner 环境差异把 CI 拖红。
 
 > **实测**:GitHub `xcode-27-arm64` runner 是 **VM(无真 GPU/ANE**,日志有 `AppleM2ScalerParavirtDriver`),
 > `VNRecognizeTextRequest` 的 **`.accurate` 级别会失败**(`unknownError`/`nilError`),但 **`.fast` 级别可用**。
