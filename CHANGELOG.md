@@ -9,6 +9,7 @@
 
 ### Added
 
+- **Apple 开发 Agent Skills**:集中维护 SwiftUI、Swift Concurrency 与 Apple 原生产品设计技能;可链接到 Codex 用户级共享目录,并从本机 Xcode 导出 Apple 官方技能。社区上游由每周 GitHub Actions 检查并创建审阅 PR。详见 [docs/09](docs/09-agent-skills.md)。
 - **iOS 运行时单测**:`tools/test-ios.sh`。用 Xcode 为 SwiftPM 包自动生成的聚合 scheme
   `<包名>-Package`，在 iOS 模拟器里跑单测（不再只靠宿主机 `swift test`），支持
   `--device` / `--filter` / `--coverage`；结果落在 `apps/<App>/.build/ios-test/result.xcresult`。

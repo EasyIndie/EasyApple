@@ -3,7 +3,7 @@
 > **这份文件是「活文档」,随执行进度直接改。**
 > 状态图例:`[ ]` 未做 · `[~]` 进行中 · `[x]` 已完成 · `[-]` 已砍掉。
 >
-> 开发机 = M1 Air(macOS 27.0 / arm64)。所有任务都在本机完成。
+> 开发机 = M1 Air(macOS 27.0.1 / arm64;2026-10-22 核验)。所有任务都在本机完成。
 
 ---
 
@@ -27,13 +27,13 @@
 
 > 规划期在 Windows 上推演的版本矩阵,已在 Air 上部分核实。
 
-- [x] **P0.1** `sw_vers` → **macOS 27.0**(build `26A428`,Golden Gate,已发布)
+- [x] **P0.1** `sw_vers` → **macOS 27.0.1**(build `26A434`,2026-10-22 核验;初次核验为 27.0 / `26A428`)
 - [x] **P0.2** 芯片 → **Apple Silicon M1**(arm64,`T8103`)
 - [x] **P0.3** Homebrew → ✅ 已装(`/opt/homebrew/bin/brew`)
-- [x] **P0.4** Command Line Tools → ✅ 已装(`/Library/Developer/CommandLineTools`,且是当前 active dev dir)
-- [x] **P0.5** `xcodebuild -version` → ✅ **Xcode 27.0 / Build 27A266a**(经 `DEVELOPER_DIR` 验证;`xcode-select` 仍指 CLT,待 `xcodes select 27.0`)
+- [x] **P0.4** Command Line Tools → ✅ 已装(`/Library/Developer/CommandLineTools`);初次核验时为 active dev dir,2026-10-22 当前已切换到完整 Xcode
+- [x] **P0.5** `xcodebuild -version` → ✅ **Xcode 27.0 / Build 27A266a**;2026-10-22 核验 `xcode-select -p` 已指向 `/Applications/Xcode-27.0.0.app/Contents/Developer`
 - [x] **P0.6** `xcrun --sdk iphonesimulator --show-sdk-path` → ✅ `.../iPhoneSimulator27.0.sdk`(iOS SDK 在)
-- [x] **P0.7** `xcrun simctl list runtimes` → ✅ 已有 **iOS 26.4、visionOS 26.0**;**iOS 27.0 待下载**(P1.3)
+- [x] **P0.7** `xcrun simctl list runtimes` → ✅ 2026-10-22 核验已有 **iOS 26.4、iOS 27.0、visionOS 26.0**(iOS 27.0 build `24A434`)
 - [x] **P0.8** `swift --version` → ✅ **Swift 6.4**(已摘掉 swiftly 的 PATH 注入,`swift` 现解析到 `/usr/bin/swift` → Xcode 6.4)
 
 > ✅ **swiftly 坑已修复**:`~/.zprofile` 里的 `. "/Users/joker/.swiftly/env.sh"` 已删除,新 shell 的 `swift` 解析到 `/usr/bin/swift`(Xcode Swift 6.4)。工具脚本里仍建议用 `xcrun swift` 更稳。
@@ -42,7 +42,7 @@
 
 ## Phase 1 — 工具链安装 + 原生打包原型
 
-- [x] **P1.1** 装 `xcodes`(bootstrap 工具,D14)→ ✅ 已装 **2.1.0**(直下 release 二进制;brew 源码构建被沙箱拦)→ ✅ `xcodes install 27.0`(Xcode 27.0 / 27A266a)
+- [x] **P1.1** 用 `xcodes` 安装 **Xcode 27.0 / 27A266a**(当时为 2.1.0;2026-10-22 核验 `xcodes` 当前未安装,它仅用于装机,不影响已安装工具链)
 - [x] **P1.2** `sudo xcodebuild -license accept` + `xcodes select 27.0`(✅ `xcode-select -p` 已指向 Xcode)
 - [x] **P1.3** 下载 iOS 模拟器 runtime:✅ `xcodes runtimes install "iOS 27.0"`(iOS 27.0 / 24A434 已装)
 - [x] **P1.4** 写 `tools/doctor.sh`(环境自检)→ ✅ 由 C2 完成
@@ -165,6 +165,7 @@
 | 2026-10-19 | 新增 iOS 运行时单测 `test-ios.sh` + 截图确定性(C15/C16) | [research/06](docs/research/06-automated-testing-acceptance.md) 的 P0 落地 |
 | 2026-10-19 | CI 增加「测试(iOS 运行时)」阻塞步骤 + 上传 xcresult | 让 C15 的新工具在 CI 里被守住;首跑已验证 |
 | 2026-10-19 | CI 加构建缓存 + 纯文档改动跳过 CI | 10× 计费下省时间/额度 |
+| 2026-10-22 | 集中维护 Apple Agent Skills:仓库技能共享安装、Xcode 官方技能导出、每周上游检查 PR;更新 README/AGENTS/知识库索引与 Air 当前环境快照 | 技能来源、许可与设备安装见 [docs/09](docs/09-agent-skills.md) |
 
 ---
 

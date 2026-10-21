@@ -28,3 +28,8 @@ bash tools/update-agent-skills.sh
 GitHub Actions 每周一检查两个 MIT 上游。发现变化时会更新技能目录和锁文件，并创建/更新 PR；审阅合并后，设备在 EasyApple 工作树执行 `git pull`，共享链接即指向新版本。需在 GitHub 仓库 Settings → Actions → General 中允许 Actions 使用 `GITHUB_TOKEN` 创建 Pull Request，否则定时任务无法创建更新 PR。这个流程不会在打开其他项目时静默联网或执行上游技能代码。
 
 `~/.agents/skills/` 是 Codex 用户级共享位置，所以同一设备上的 Codex 项目都可发现这些技能；各技能描述负责限定适用场景。不同设备需先克隆/更新 EasyApple 并运行一次安装脚本。Apple 官方技能需要本机安装可导出技能的 Xcode；没有相应 Xcode 时，脚本仍链接仓库技能并提示缺少官方导出源。
+
+## 最近核验
+
+- 2026-10-22，在 Air 上运行 `bash tools/install-agent-skills.sh` 后，`apple-native-product-design`、`swiftui-pro`、`swift-concurrency-pro` 均已链接到本仓库的 `.agents/skills/`。Xcode 官方技能由 Xcode 27.0 导出。
+- 同日核验 GitHub 上游自动更新工作流已随仓库配置；它创建待审 PR，不直接更新 `main`。创建 PR 需要仓库 Actions 设置允许 `GITHUB_TOKEN` 创建 Pull Request。

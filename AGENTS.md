@@ -96,13 +96,14 @@ Apple 项目共享技能维护在 [`.agents/skills/`](.agents/skills/)；首次�
 
 | 组件 | 版本/状态 | 复核命令 |
 |---|---|---|
-| macOS | 27.0(build `26A428`,Golden Gate) | `sw_vers` |
+| macOS | 27.0.1(build `26A434`,2026-10-22 核验) | `sw_vers` |
 | 芯片 | Apple Silicon M1(arm64) | `uname -m` |
-| Xcode | 目标 27.0(待装) | `xcodebuild -version` |
+| Xcode | 27.0(build `27A266a`),已选为 active developer directory | `xcodebuild -version` / `xcode-select -p` |
 | Swift | 6.4(随 Xcode 27) | `swift --version` |
-| Homebrew | ✅ 已装 | `brew --version` |
-| Command Line Tools | ✅ 已装(但拿不到 iOS SDK) | `xcode-select -p` |
-| 模拟器 runtime | 需单独下载 | `xcrun simctl list runtimes` |
+| Homebrew | ✅ 已装(最近核验) | `brew --version` |
+| Command Line Tools | 已装;当前 active developer directory 是完整 Xcode | `xcode-select -p` |
+| iOS 模拟器 runtime | iOS 27.0 已装(2026-10-22 核验) | `xcrun simctl list runtimes` |
+| xcodes | 可选装机工具;当前未安装,已安装的 Xcode/runtime 不受影响 | `command -v xcodes` |
 | 打包 | 自写原生脚本(`tools/bundle.sh`) | — |
 
 ---
