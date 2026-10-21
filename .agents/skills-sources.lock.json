@@ -1,0 +1,16 @@
+{
+  "skills": [
+    {
+      "name": "swiftui-pro",
+      "repository": "https://github.com/twostraws/SwiftUI-Agent-Skill.git",
+      "revision": "ce32af1693b9e78a7d22ff48001c97a304d32063",
+      "ref": "upstream-default-branch"
+    },
+    {
+      "name": "swift-concurrency-pro",
+      "repository": "https://github.com/twostraws/Swift-Concurrency-Agent-Skill.git",
+      "revision": "bee3f69ba17142da148d3c5406f148ed62592b69",
+      "ref": "upstream-default-branch"
+    }
+  ]
+}

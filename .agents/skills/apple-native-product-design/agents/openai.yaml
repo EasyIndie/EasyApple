@@ -1,0 +1,4 @@
+interface:
+  display_name: "Apple 原生产品设计"
+  short_description: "依据最新 Apple HIG 设计交互、语义配色与多状态视觉稿，兼顾旧系统和可访问性"
+  default_prompt: "使用 $apple-native-product-design 为当前产品设计交互、亮暗视觉稿与可复用设计规范。"

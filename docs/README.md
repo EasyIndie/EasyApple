@@ -15,6 +15,7 @@
 | [06-ui-acceptance.md](06-ui-acceptance.md) | UI 验收(截图为先) |
 | [07-cross-platform-and-no-mac.md](07-cross-platform-and-no-mac.md) | 跨平台 / 无 Mac 全景(首期不采用) |
 | [08-gotchas.md](08-gotchas.md) | **踩坑速查** |
+| [09-agent-skills.md](09-agent-skills.md) | Apple 开发技能共享、安装与自动更新 |
 | [00-decisions.md](00-decisions.md) | 决策记录(D1–D14,已定稿) |
 
 ## 规划期调研(`research/`,来源/依据,部分已在 Air 核实)

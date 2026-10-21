@@ -9,11 +9,15 @@ on:
       - '**/*.md'
       - 'docs/**'
       - 'LICENSE'
+      - '.agents/skills/**'
+      - '.agents/skills-sources.lock.json'
   pull_request:
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
       - 'LICENSE'
+      - '.agents/skills/**'
+      - '.agents/skills-sources.lock.json'
   workflow_dispatch:
 
 # macOS runner 是 10× 计费倍率;显式 pin(见决策 D9),不用 macos-latest。

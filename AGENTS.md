@@ -53,6 +53,7 @@ docs/NN-*.md         执行期文档(实测后写,执行阶段创建)
 apps/                可运行的 SwiftPM 工程
 tools/               构建/模拟器/验收脚本
 version.properties   版本号唯一来源
+.agents/skills/       Apple 开发项目共享的 Codex 技能
 ```
 
 - **新的调研结论** → `docs/research/`,并在 `docs/research/README.md` 加一行。
@@ -61,6 +62,10 @@ version.properties   版本号唯一来源
 - **改了计划** → 直接改 `PLAN.md`,并在其附录 B 记一行变更。
 
 ---
+
+## Agent Skills
+
+Apple 项目共享技能维护在 [`.agents/skills/`](.agents/skills/)；首次在设备上使用时运行 `bash tools/install-agent-skills.sh`。该脚本将仓库技能链接到 Codex 用户级共享目录，并从已安装 Xcode 导出 Apple 官方技能。社区上游自动检查与许可边界见 [`docs/09-agent-skills.md`](docs/09-agent-skills.md)。更新仓库内社区技能用 `bash tools/update-agent-skills.sh`；自动更新只创建待审 PR，不直接改写主分支。
 
 ## 2. 已否决的方案清单(不要重复调研)
 

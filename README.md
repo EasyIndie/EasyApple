@@ -20,9 +20,15 @@ Apple 平台(iOS / iPadOS / macOS,后续扩展全平台)**无 IDE 命令行开�
 |---|---|
 | [`PLAN.md`](PLAN.md) | **执行计划(主交付物)** —— 分阶段、可勾选 |
 | [`AGENTS.md`](AGENTS.md) | 给 AI 编码智能体的仓库说明与硬性约束 |
+| [`.agents/skills/`](.agents/skills/) | 多个 Apple 项目共享的 Codex 技能集合 |
+| [`docs/09-agent-skills.md`](docs/09-agent-skills.md) | 技能来源、自动更新与设备安装 |
 | [`docs/`](docs/) | 知识沉淀:决策记录、执行期文档、调研 |
 | [`docs/00-decisions.md`](docs/00-decisions.md) | 决策记录(决策 / 理由 / 状态 / 怎么改) |
 | [`docs/research/`](docs/research/) | 规划期调研:Apple 规则 / 跨平台能力 / 模拟器跨平台 / SwiftPM 打包 |
+
+## Apple 开发技能
+
+本仓库集中维护 SwiftUI、Swift Concurrency 与 Apple 原生产品设计技能。首次在 Mac 上使用时运行 `bash tools/install-agent-skills.sh`；技能更新与来源见 [`docs/09-agent-skills.md`](docs/09-agent-skills.md)。
 
 ## 与 EasyAndroid 的关系
 

@@ -1,0 +1,46 @@
+name: Update Apple agent skills
+
+on:
+  schedule:
+    - cron: '37 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh-community-skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Fetch latest upstream skills
+        run: bash tools/update-agent-skills.sh
+      - name: Create or update review PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- .agents/skills/swiftui-pro .agents/skills/swift-concurrency-pro .agents/skills-sources.lock.json; then
+            echo '上游技能没有变化'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -C automation/update-apple-agent-skills
+          git add .agents/skills/swiftui-pro .agents/skills/swift-concurrency-pro .agents/skills-sources.lock.json
+          git commit -m 'chore(skills): 更新 Apple 开发技能'
+          gh auth setup-git
+          git push --force origin HEAD:automation/update-apple-agent-skills
+          body_file="$(mktemp)"
+          cat > "$body_file" <<'BODY'
+          自动检查 SwiftUI Pro 与 Swift Concurrency Pro 上游默认分支，并记录对应 commit。
+
+          请审阅技能说明和参考资料的变化后合并。Apple 官方技能由各设备已安装的 Xcode 导出，不随本 PR 复制分发。
+          BODY
+          if gh pr view automation/update-apple-agent-skills >/dev/null 2>&1; then
+            gh pr edit automation/update-apple-agent-skills --title 'chore(skills): 更新 Apple 开发技能' --body-file "$body_file"
+          else
+            gh pr create --base main --head automation/update-apple-agent-skills --title 'chore(skills): 更新 Apple 开发技能' --body-file "$body_file"
+          fi
