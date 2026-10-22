@@ -28,6 +28,7 @@
 
 ### Fixed
 
+- **Agent 技能描述超出规范上限**：Xcode 导出的 `app-intents-specialist` / `app-intents-whats-new-27` 描述超过 Agent Skills 规范的 1024 字符上限，导致 pi / Claude 报「技能冲突」并拒绝加载。新增 `tools/apple-skill-descriptions.json`（短描述覆盖表）与 `tools/apply-skill-description-overrides.py`，由 `tools/install-agent-skills.sh` 在每次导出后自动应用，`tools/doctor.sh` 复用同一校验。详见 [docs/09](docs/09-agent-skills.md)。
 - CI artifact 从未真正上传:`upload-artifact@v4` 默认 `include-hidden-files: false`,
   而截图在 `.tmp/`、xcresult 在 `.build/`(都是隐藏目录)。两条上传步骤已显式打开该开关,
   仓库产物数从 0 恢复为 2(截图 + iOS 单测结果)。

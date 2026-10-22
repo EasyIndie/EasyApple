@@ -29,7 +29,35 @@ GitHub Actions 每周一检查两个 MIT 上游。发现变化时会更新技能
 
 `~/.agents/skills/` 是 Codex 用户级共享位置，所以同一设备上的 Codex 项目都可发现这些技能；各技能描述负责限定适用场景。不同设备需先克隆/更新 EasyApple 并运行一次安装脚本。Apple 官方技能需要本机安装可导出技能的 Xcode；没有相应 Xcode 时，脚本仍链接仓库技能并提示缺少官方导出源。
 
+## 描述长度上限（1024 字符）
+
+Agent Skills 规范限制每个技能的 `description` 最多 **1024 字符**（[agentskills.io/integrate-skills](https://agentskills.io/integrate-skills)），pi、Claude 等按规范校验的客户端会**拒绝加载**超限技能，启动时表现为「技能冲突 / description exceeds 1024」。
+
+Xcode 27 导出的 `app-intents-specialist`（2537 字符）和 `app-intents-whats-new-27`（2124 字符）超出该上限。它们的 `references/*.md` 里已有全部细节，描述只需要承担路由职责，因此本仓库维护一份**短描述覆盖表**：
+
+| 文件 | 作用 |
+|---|---|
+| `tools/apple-skill-descriptions.json` | 技能目录名 → 短描述（≤1024 字符，保留触发词与「兄弟技能」指引）；以 `_` 开头的键是注释 |
+| `tools/apply-skill-description-overrides.py` | 导出后按覆盖表改写 `SKILL.md` 的 `description`（保留原权限位），并检查目录里是否还有超限技能（有则退出码 1） |
+
+接线点：
+
+- `tools/install-agent-skills.sh` 在 `xcrun agent skills export --replace-existing` 之后自动应用覆盖表，最后对 `~/.agents/skills/` 做一次只读校验；**Xcode 升级后重新导出也不会丢掉短描述**。
+- `tools/doctor.sh` 的「Agent 技能描述」一行复用同一校验。
+
+Apple 将来新增的技能若也超限，安装脚本会失败并列出名字；把它加进覆盖表即可。手动应用/校验：
+
+```bash
+python3 tools/apply-skill-description-overrides.py \
+  --overrides tools/apple-skill-descriptions.json \
+  --skills "$HOME/Library/Developer/Xcode/CodingAssistant/codex/skills/__xcode"
+python3 tools/apply-skill-description-overrides.py --check-only \
+  --overrides tools/apple-skill-descriptions.json \
+  --skills "$HOME/.agents/skills"
+```
+
 ## 最近核验
 
 - 2026-10-22，在 Air 上运行 `bash tools/install-agent-skills.sh` 后，`apple-native-product-design`、`swiftui-pro`、`swift-concurrency-pro` 均已链接到本仓库的 `.agents/skills/`。Xcode 官方技能由 Xcode 27.0 导出。
 - 同日核验 GitHub 上游自动更新工作流已随仓库配置；它创建待审 PR，不直接更新 `main`。创建 PR 需要仓库 Actions 设置允许 `GITHUB_TOKEN` 创建 Pull Request。
+- 2026-10-22，修复 pi 报出的技能冲突：`app-intents-specialist` / `app-intents-whats-new-27` 的描述超过 1024 字符上限，改为 767 / 914 字符（路由信息与兄弟技能指引保留）。已用 pi 的加载器验证零诊断；重跑 `bash tools/install-agent-skills.sh`（含重新导出）后短描述仍生效。

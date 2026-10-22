@@ -63,6 +63,19 @@ else
   c_warn "xcodes(装机)" "未装(bootstrap.sh 会装)"
 fi
 
+# Agent 技能描述长度(pi/Claude 会拒绝加载超过 1024 字符的技能)
+skills="$HOME/.agents/skills"
+if [ -d "$skills" ]; then
+  if python3 "$REPO_ROOT/tools/apply-skill-description-overrides.py" --check-only \
+    --overrides "$REPO_ROOT/tools/apple-skill-descriptions.json" --skills "$skills" >/dev/null 2>&1; then
+    c_ok "Agent 技能描述" "$(find -L "$skills" -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ') 个技能均在 1024 字符内"
+  else
+    c_bad "Agent 技能描述" "有技能超过 1024 字符;重跑 tools/install-agent-skills.sh"
+  fi
+else
+  c_warn "Agent 技能描述" "未找到 $skills"
+fi
+
 echo
 echo "== 通过 $PASS / 警告 $WARN / 失败 $FAIL =="
 [ "$FAIL" -eq 0 ]

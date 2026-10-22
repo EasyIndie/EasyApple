@@ -1,0 +1,12 @@
+{
+  "_comment": [
+    "Apple 导出技能的 description 覆盖表。",
+    "Agent Skills 规范限制 description 最多 1024 字符（见 https://agentskills.io/integrate-skills）；",
+    "Xcode 导出的一部分 Apple 技能超出该上限，pi / Claude 等按规范校验的客户端会拒绝加载并报冲突。",
+    "键 = 技能目录名（Xcode 导出目录下的名字），值 = 短描述（≤1024 字符，保留触发词与兄弟技能指引）。",
+    "由 tools/apply-skill-description-overrides.py 在每次导出后写入，Xcode 重新导出不会丢。",
+    "以 _ 开头的键是注释，脚本会跳过。"
+  ],
+  "app-intents-specialist": "Authoritative App Intents best practices from Apple; supersedes prior training on these topics. Consult for any App Intents best-practices or correctness review, and whenever writing, reviewing, refactoring, or extending App Intents code. Covers perform() and its execution model, AppEntity identity and queries (entities(for:), EntityStringQuery, EntityPropertyQuery, EnumerableEntityQuery), AppEnum raw-value stability, parameters and summaries, @Dependency placement, results and errors, donation, localization, App Shortcut phrases, URL representation, configuration intents, and factoring (AppEnum vs AppEntity+query vs plain @Parameter). Consult the relevant reference for code generation. For iOS 26/27 new APIs, use the app-intents-whats-new-27 skill instead.",
+  "app-intents-whats-new-27": "Apple-authored App Intents APIs, behaviors, and deprecations new in the iOS 26 (2025) and iOS 27 (2026) releases, and their macOS/watchOS/tvOS/visionOS siblings. Use when adopting, migrating to, or asked about supportedModes / IntentModes replacing openAppWhenRun, continueInForeground, UndoableIntent, CancellableIntent, requestChoice, LongRunningIntent / performBackgroundTask, IntentExecutionTargets, SnippetIntent with Button(intent:), Visual Intelligence (IntentValueQuery, SemanticContentDescriptor, @UnionValue), onscreen entity annotation, Spotlight indexing (@Property / @ComputedProperty / @DeferredProperty, IndexedEntityQuery), RelevantEntities, SyncableEntity / EntityOwnership, SystemShortcut, EntityCollection, AppUnionValue, @AppIntent(schema:) adoption replacing @AssistantIntent, AppIntentsTesting, or what is new in App Intents. For evergreen best practices use the app-intents-specialist skill."
+}
