@@ -15,10 +15,10 @@ permissions:
 
 jobs:
   release:
-    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.3.1
+    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.4.0
     with:
       runs_on: xcode-27
-      kit_ref: apple-v0.3.1
+      kit_ref: apple-v0.4.0
       app: EnvDemo
       bundle_id: com.easyapple.envdemo
       build_command: bash tools/bundle.sh --app EnvDemo --platform macOS
@@ -27,9 +27,4 @@ jobs:
       identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
       release: false
       upload_artifact: true
-    secrets:
-      APPLE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
-      APPLE_P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
-      ASC_KEY_ID: ${{ secrets.APPLE_ASC_API_KEY_ID }}
-      ASC_ISSUER_ID: ${{ secrets.APPLE_ASC_ISSUER_ID }}
-      ASC_KEY_P8: ${{ secrets.APPLE_ASC_API_KEY }}
+    secrets: inherit
