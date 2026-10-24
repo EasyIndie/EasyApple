@@ -15,10 +15,10 @@ permissions:
 
 jobs:
   release:
-    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.4.0
+    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.6.1
     with:
       runs_on: xcode-27
-      kit_ref: apple-v0.4.0
+      kit_ref: apple-v0.6.1
       app: EnvDemo
       bundle_id: com.easyapple.envdemo
       build_command: bash tools/bundle.sh --app EnvDemo --platform macOS

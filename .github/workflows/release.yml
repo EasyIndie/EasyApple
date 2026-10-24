@@ -66,10 +66,10 @@ jobs:
       fail-fast: false
       matrix:
         app: ${{ fromJSON(needs.prepare.outputs.apps) }}
-    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.5.1
+    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.6.1
     with:
       runs_on: xcode-27
-      kit_ref: apple-v0.5.1
+      kit_ref: apple-v0.6.1
       checkout_ref: ${{ needs.prepare.outputs.tag }}
       app: ${{ matrix.app }}
       build_command: bash tools/bundle.sh --app ${{ matrix.app }} --platform macOS
@@ -97,22 +97,52 @@ jobs:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           set -euo pipefail
+          shopt -s nullglob
           archives=()
           for dir in dist/easyrelease-*; do
             [ -d "$dir" ] || continue
             app="${dir#dist/easyrelease-}"
-            [ -d "$dir/$app.app" ] || { echo "::error::缺少 $dir/$app.app"; exit 1; }
             [ -f "$dir/apple-manifest.json" ] || { echo "::error::缺少 $dir/apple-manifest.json"; exit 1; }
-            archive="$app-$TAG.zip"
-            stage="$RUNNER_TEMP/release-$app"
-            rm -rf "$stage"
-            mkdir -p "$stage"
-            # ditto 保留 bundle 元数据/扩展属性,避免 staple 票据在打包时丢失。
-            ditto "$dir/$app.app" "$stage/$app.app"
-            cp "$dir/apple-manifest.json" "$stage/apple-manifest.json"
-            ditto -c -k "$stage" "$archive"
-            shasum -a 256 "$archive" > "$archive.sha256"
-            archives+=("$archive" "$archive.sha256")
+
+            files=()
+            zips=("$dir"/*.zip)
+            apps=("$dir"/*.app)
+            dmgs=("$dir"/*.dmg)
+            pkgs=("$dir"/*.pkg)
+
+            if [ ${#zips[@]} -eq 1 ]; then
+              # EasyRelease 已产出签名/公证后的 zip,直接作为发布物。
+              cp "${zips[0]}" "$app-$TAG.zip"
+              files=("$app-$TAG.zip")
+            elif [ ${#apps[@]} -eq 1 ]; then
+              archive="$app-$TAG.zip"
+              stage="$RUNNER_TEMP/release-$app"
+              rm -rf "$stage"
+              mkdir -p "$stage"
+              # ditto 保留 bundle 元数据/扩展属性,避免 staple 票据在打包时丢失。
+              ditto "${apps[0]}" "$stage/$app.app"
+              cp "$dir/apple-manifest.json" "$stage/apple-manifest.json"
+              ditto -c -k "$stage" "$archive"
+              files=("$archive")
+            elif [ ${#dmgs[@]} -eq 1 ]; then
+              cp "${dmgs[0]}" "$app-$TAG.dmg"
+              files=("$app-$TAG.dmg")
+            elif [ ${#pkgs[@]} -eq 1 ]; then
+              cp "${pkgs[0]}" "$app-$TAG.pkg"
+              files=("$app-$TAG.pkg")
+            else
+              echo "::error::$dir 里没有唯一的 .zip/.app/.dmg/.pkg"
+              find "$dir" -maxdepth 2 -print
+              exit 1
+            fi
+
+            cp "$dir/apple-manifest.json" "$app-$TAG-manifest.json"
+            files+=("$app-$TAG-manifest.json")
+
+            for f in "${files[@]}"; do
+              shasum -a 256 "$f" > "$f.sha256"
+              archives+=("$f" "$f.sha256")
+            done
           done
           [ ${#archives[@]} -gt 0 ] || { echo "::error::没有可发布产物"; exit 1; }
           printf '%s\n' "${archives[@]}" > archives.txt

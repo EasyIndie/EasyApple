@@ -169,6 +169,7 @@
 | 2026-10-24 | 发布能力外置:新建独立仓库 EasyRelease(composite action + reusable workflow),EasyApple 只做首个消费方 | 多项目复用需要独立版本与供应链边界,见 D16 |
 | 2026-10-24 | EasyRelease `apple-v0.4.0` 验证通过:EnvDemo 的 Developer ID 签名 + 公证 + staple + Gatekeeper;reusable workflow 支持 `secrets: inherit` | 组织共享凭据;run `40095862502` / `40096049639` / `40097027827` |
 | 2026-10-24 | 正式发布切换 EasyRelease:release.yml 产出签名/公证 zip + sha256,dry-run 通过 | 见 D17;run `40098486383` |
+| 2026-10-24 | EasyRelease `apple-v0.6.0`:`.dmg`/`.zip` 真链路验证通过,公证支持 App 专用密码 | run `40099541736` |
 
 ---
 

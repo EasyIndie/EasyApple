@@ -9,6 +9,9 @@
 
 ### Added
 
+- **EasyRelease 支持 `.dmg` / `.zip` 与 App 专用密码**:`.dmg` 已完成 Developer ID +
+  公证 + staple 真链路验证;`.zip` 支持「解包 → 签名/公证/staple 内层 → 重新打包 →
+  再解压校验」;公证认证可选 API Key 或 Apple ID + App 专用密码。
 - **正式发布接入 EasyRelease**:`release.yml` 按 `apps/` matrix 调用
   `EasyIndie/EasyRelease` reusable workflow，产出 Developer ID 签名 + 公证 + staple 的
   `.app`，用 `ditto` 打 zip 并附 `.sha256`，不再发布 ad-hoc 包。支持
