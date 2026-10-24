@@ -155,6 +155,9 @@ jobs:
           name: release-dry-run-${{ needs.prepare.outputs.tag }}
           path: |
             *.zip
+            *.dmg
+            *.pkg
+            *.json
             *.sha256
             archives.txt
           if-no-files-found: error
