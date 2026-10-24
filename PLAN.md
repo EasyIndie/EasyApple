@@ -166,6 +166,7 @@
 | 2026-10-19 | CI 增加「测试(iOS 运行时)」阻塞步骤 + 上传 xcresult | 让 C15 的新工具在 CI 里被守住;首跑已验证 |
 | 2026-10-19 | CI 加构建缓存 + 纯文档改动跳过 CI | 10× 计费下省时间/额度 |
 | 2026-10-22 | 集中维护 Apple Agent Skills:仓库技能共享安装、Xcode 官方技能导出、每周上游检查 PR;更新 README/AGENTS/知识库索引与 Air 当前环境快照 | 技能来源、许可与设备安装见 [docs/09](docs/09-agent-skills.md) |
+| 2026-10-24 | 发布能力外置:新建独立仓库 EasyRelease(composite action + reusable workflow),EasyApple 只做首个消费方 | 多项目复用需要独立版本与供应链边界,见 D16 |
 
 ---
 
