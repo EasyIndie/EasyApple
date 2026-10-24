@@ -46,7 +46,7 @@ jobs:
 
       - name: 签名 / 公证 / 校验(EasyRelease)
         id: sign
-        uses: EasyIndie/EasyRelease/apple@apple-v0.2.0
+        uses: EasyIndie/EasyRelease/apple@apple-v0.3.0
         with:
           artifact: apps/EnvDemo/.build/bundle/EnvDemo.app
           mode: developer-id
