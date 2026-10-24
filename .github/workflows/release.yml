@@ -4,77 +4,137 @@ on:
   push:
     tags:
       - '[0-9]*.[0-9]*.[0-9]*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "已存在的 tag(用于 dry-run 验证)"
+        required: true
+      dry_run:
+        description: "只构建/签名/打包,不创建 GitHub Release"
+        type: boolean
+        default: true
 
 # 建 Release 需要写权限
 permissions:
   contents: write
 
 jobs:
-  release:
-    runs-on: xcode-27
-    timeout-minutes: 60
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      apps: ${{ steps.meta.outputs.apps }}
+      dry_run: ${{ steps.meta.outputs.dry_run }}
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ inputs.tag || github.ref_name }}
           fetch-depth: 0
 
-      - name: 校验 tag == version.properties
+      - name: 校验 tag 与列出应用
+        id: meta
+        env:
+          REF: ${{ inputs.tag || github.ref_name }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
         run: |
-          tag="${GITHUB_REF_NAME}"
-          v="$(bash tools/sync-version.sh | sed -n 's/^version=//p')"
-          echo "tag=$tag version=$v"
-          [ "$tag" = "$v" ] || { echo "tag 与 version.properties 不一致"; exit 1; }
+          set -euo pipefail
+          v="$(sed -n 's/^version=//p' version.properties | head -1 | tr -d '[:space:]')"
+          [ -n "$v" ] || { echo "::error::version.properties 缺少 version"; exit 1; }
+          echo "tag=$REF version=$v dry_run=$DRY_RUN"
+          [ "$REF" = "$v" ] || { echo "::error::tag 与 version.properties 不一致"; exit 1; }
+          apps="$(find apps -mindepth 1 -maxdepth 1 -type d -exec basename {} \; \
+            | LC_ALL=C sort \
+            | python3 -c 'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')"
+          [ "$apps" != "[]" ] || { echo "::error::apps/ 下没有应用"; exit 1; }
+          {
+            echo "tag=$REF"
+            echo "apps=$apps"
+            echo "dry_run=$DRY_RUN"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: 选择 Xcode 27(优先 27.0 稳定版)
+      - name: 输出应用列表
+        run: echo "${{ steps.meta.outputs.apps }}"
+
+  sign:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.prepare.outputs.apps) }}
+    permissions:
+      contents: read
+    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.5.0
+    with:
+      runs_on: xcode-27
+      kit_ref: apple-v0.5.0
+      app: ${{ matrix.app }}
+      build_command: bash tools/bundle.sh --app ${{ matrix.app }} --platform macOS
+      mode: developer-id
+      notarize: true
+      identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
+      release: false
+      upload_artifact: true
+    secrets: inherit
+
+  publish:
+    needs: [prepare, sign]
+    runs-on: xcode-27
+    permissions:
+      contents: write
+    steps:
+      - name: 下载签名产物
+        uses: actions/download-artifact@v4
+        with:
+          pattern: easyrelease-*
+          path: dist
+
+      - name: 打包
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
-          shopt -s nullglob
-          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
-          pick=""
-          for p in "${all[@]}"; do
-            case "$p" in *27.0*) pick="$p"; break;; esac
+          set -euo pipefail
+          archives=()
+          for dir in dist/easyrelease-*; do
+            [ -d "$dir" ] || continue
+            app="${dir#dist/easyrelease-}"
+            [ -d "$dir/$app.app" ] || { echo "::error::缺少 $dir/$app.app"; exit 1; }
+            [ -f "$dir/apple-manifest.json" ] || { echo "::error::缺少 $dir/apple-manifest.json"; exit 1; }
+            archive="$app-$TAG.zip"
+            stage="$RUNNER_TEMP/release-$app"
+            rm -rf "$stage"
+            mkdir -p "$stage"
+            # ditto 保留 bundle 元数据/扩展属性,避免 staple 票据在打包时丢失。
+            ditto "$dir/$app.app" "$stage/$app.app"
+            cp "$dir/apple-manifest.json" "$stage/apple-manifest.json"
+            ditto -c -k "$stage" "$archive"
+            shasum -a 256 "$archive" > "$archive.sha256"
+            archives+=("$archive" "$archive.sha256")
           done
-          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
-            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
-          fi
-          if [ -n "$pick" ]; then
-            sudo xcode-select -s "$pick/Contents/Developer"
-          fi
-          xcodebuild -version
+          [ ${#archives[@]} -gt 0 ] || { echo "::error::没有可发布产物"; exit 1; }
+          printf '%s\n' "${archives[@]}" > archives.txt
+          cat archives.txt
 
-      - name: 打包(macOS,遍历所有应用)
-        run: |
-          source tools/_common.sh
-          for app in $(list_apps); do
-            echo "== $app =="
-            bash tools/bundle.sh --app "$app" --platform macOS
-          done
+      - name: 上传 dry-run 包
+        if: needs.prepare.outputs.dry_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-dry-run-${{ needs.prepare.outputs.tag }}
+          path: |
+            *.zip
+            *.sha256
+            archives.txt
+          if-no-files-found: error
 
-      - name: 建 Release
+      - name: 创建 GitHub Release
+        if: needs.prepare.outputs.dry_run != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
-          source tools/_common.sh
+          set -euo pipefail
           archives=()
-          for app in $(list_apps); do
-            APP="apps/$app/.build/bundle/$app.app"
-            [ -d "$APP" ] || { echo "缺少 $APP(打包步骤失败?)"; exit 1; }
-            archive="$app-${GITHUB_REF_NAME}.tar.gz"
-            stage="$(mktemp -d)"
-            cp -R "$APP" "$stage/"
-            items=("$app.app")
-            # 仅当产物是 ad-hoc(未真实签名)时,附上绕过 Gatekeeper 的打开脚本;
-            # 一旦将来用 Developer ID 签名并公证,就不再附带。
-            if is_adhoc_signed "$APP"; then
-              echo "$app: ad-hoc 签名 → 附带 open-unsigned-app.sh"
-              install -m 0755 tools/open-unsigned-app.sh "$stage/"
-              items+=(open-unsigned-app.sh)
-            else
-              echo "$app: 已真实签名 → 不附带绕过脚本"
-            fi
-            tar -czf "$archive" -C "$stage" "${items[@]}"
-            archives+=("$archive")
-          done
-          [ "${#archives[@]}" -gt 0 ] || { echo "apps/ 下没有可发布的应用"; exit 1; }
-          gh release create "${GITHUB_REF_NAME}" "${archives[@]}" --generate-notes
-          # 后续签名 secrets 命名预留(本阶段零证书,不启用):
-          #   APPLE_CERT_P12_BASE64 / APPLE_CERT_PASSWORD / APPLE_ID / APPLE_TEAM_ID
+          while IFS= read -r f; do
+            [ -n "$f" ] && archives+=("$f")
+          done < archives.txt
+          [ ${#archives[@]} -gt 0 ] || { echo "::error::没有可发布文件"; exit 1; }
+          gh release create "$TAG" "${archives[@]}" --verify-tag --generate-notes
