@@ -34,5 +34,5 @@
 | 2026-09-27 | 新增 D15(文本级验收用原生 OCR);D7 收窄为「截图为先」 |
 | 2026-10-24 | 新增 D16(发布能力外置为 EasyRelease;EasyApple 只做消费方) |
 | 2026-10-24 | D16 落地:EasyRelease `apple-v0.4.0`;EnvDemo 用组织共享凭据验证 Developer ID + 公证 + staple + Gatekeeper 全部通过;composite action(run `40095862502`)、reusable workflow(run `40096049639`)、`secrets: inherit`(run `40097027827`)三链路均验证 |
-| 2026-10-24 | 新增 D17:正式 `release.yml` 切换 EasyRelease,产出签名/公证 zip;dry-run run `40098486383` 通过 |
+| 2026-10-24 | 新增 D17:正式 `release.yml` 切换 EasyRelease,产出签名/公证 zip;dry-run run `40099918160` 通过 |
 | 2026-10-24 | EasyRelease v0.6.0:`.dmg`/`.zip` 真链路验证通过;公证支持 API Key 与 App 专用密码(run `40099541736`) |
