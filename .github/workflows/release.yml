@@ -66,10 +66,10 @@ jobs:
       fail-fast: false
       matrix:
         app: ${{ fromJSON(needs.prepare.outputs.apps) }}
-    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.6.1
+    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.6.2
     with:
       runs_on: xcode-27
-      kit_ref: apple-v0.6.1
+      kit_ref: apple-v0.6.2
       checkout_ref: ${{ needs.prepare.outputs.tag }}
       app: ${{ matrix.app }}
       build_command: bash tools/bundle.sh --app ${{ matrix.app }} --platform macOS
