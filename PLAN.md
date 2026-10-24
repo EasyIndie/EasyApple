@@ -171,6 +171,7 @@
 | 2026-10-24 | 正式发布切换 EasyRelease:release.yml 产出签名/公证 zip + sha256,dry-run 通过 | 见 D17;run `40099918160` |
 | 2026-10-24 | EasyRelease `apple-v0.6.0`:`.dmg`/`.zip` 真链路验证通过,公证支持 App 专用密码 | run `40099541736` |
 | 2026-10-24 | App 专用密码认证实测通过;EasyRelease v0.6.3 支持 Installer 身份,新增 `verify-pkg.yml` | run `40101281656` |
+| 2026-10-24 | `.pkg` 真链路验证通过(Developer ID Installer + 公证 + staple) | run `40105139059` |
 
 ---
 

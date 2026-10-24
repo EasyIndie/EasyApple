@@ -118,6 +118,7 @@ spctl -a -vv EnvDemo.app
 因此 Release 包**不再附带 `open-unsigned-app.sh`**,下载解压后双击即可。
 EasyRelease 也支持 `.dmg` 与 `.zip` 输入;`release.yml` 的发布步骤会按产物类型处理:
 `.app` → zip,`.zip` → 直接发布,`.dmg` / `.pkg` → 原生文件。
+`.pkg` 使用 Developer ID Installer 证书,公证后 `spctl -t install` 通过(2026-10-24 实测)。
 实测 `spctl` 返回 `accepted` / `source=Notarized Developer ID`(2026-10-24,见 D17)。
 
 `is_adhoc_signed()` 与 `tools/open-unsigned-app.sh` 仍保留给本地调试,但不再进入 Release。
