@@ -1,0 +1,92 @@
+name: Verify Apple ID Notarization
+
+# 用 Apple ID + App 专用密码跑真实公证认证。
+# 需要 secrets: APPLE_ID、APPLE_TEAM_ID(组织)与 APPLE_APP_SPECIFIC_PASSWORD_TEST(仓库)。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-apple-id-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选择 Xcode 27(优先 27.0 稳定版)
+        run: |
+          shopt -s nullglob
+          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          pick=""
+          for p in "${all[@]}"; do
+            case "$p" in *27.0*) pick="$p"; break;; esac
+          done
+          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
+          fi
+          if [ -n "$pick" ]; then
+            sudo xcode-select -s "$pick/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: 检查 Apple ID 认证配置
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD_TEST }}
+        run: |
+          set -euo pipefail
+          [ -n "$APPLE_ID" ] || { echo "::error::缺少 APPLE_ID secret"; exit 1; }
+          [ -n "$APPLE_TEAM_ID" ] || { echo "::error::缺少 APPLE_TEAM_ID secret"; exit 1; }
+          [ -n "$APPLE_PASSWORD" ] || { echo "::error::缺少 APPLE_APP_SPECIFIC_PASSWORD_TEST secret"; exit 1; }
+          echo "APPLE_ID / TEAM_ID / 专用密码均已配置(长度 ${#APPLE_PASSWORD})"
+
+      - name: 构建 macOS EnvDemo
+        run: |
+          bash tools/bundle.sh --app EnvDemo --platform macOS
+          echo "APP=$PWD/apps/EnvDemo/.build/bundle/EnvDemo.app" >> "$GITHUB_ENV"
+
+      - name: 用 Apple ID + App 专用密码公证
+        id: sign
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.3
+        with:
+          artifact: ${{ env.APP }}
+          mode: developer-id
+          notarize: "true"
+          notary_auth: apple-id
+          apple_id: ${{ secrets.APPLE_ID }}
+          apple_password: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD_TEST }}
+          team_id: ${{ secrets.APPLE_TEAM_ID }}
+          identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
+          p12_base64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          p12_password: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
+
+      - name: 校验结果
+        env:
+          APP: ${{ steps.sign.outputs.signed_artifact }}
+          MANIFEST: ${{ steps.sign.outputs.manifest_path }}
+        run: |
+          set -euo pipefail
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          xcrun stapler validate "$APP"
+          spctl -a -vvv -t exec "$APP"
+          python3 -m json.tool "$MANIFEST"
+          plutil -extract notary_auth raw -o - "$MANIFEST" | grep -qx apple-id
+          plutil -extract notarized raw -o - "$MANIFEST" | grep -qx true
+          plutil -extract verified raw -o - "$MANIFEST" | grep -qx true
+
+      - name: 上传产物与 manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-apple-id-${{ github.run_id }}
+          path: |
+            ${{ env.APP }}
+            ${{ steps.sign.outputs.manifest_path }}
+          if-no-files-found: warn
