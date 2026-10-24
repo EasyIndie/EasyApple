@@ -53,12 +53,18 @@ git push --follow-tags         # 触发 release.yml
 
 推导规则:major=`type!:` · minor=`feat:` · patch=`fix|perf|refactor:`。
 
+发布流水线支持 dry-run(不建 Release,只产出可下载的 zip):
+
+```bash
+gh workflow run release.yml -R EasyIndie/EasyApple -f tag=0.3.0 -f dry_run=true
+```
+
 ## 5. CI / 发布(已验证)
 
 | | 说明 |
 |---|---|
 | `ci.yml` | `runs-on: xcode-27`,显式选 **Xcode_27.0.0.app(27A266a,与 Air 完全一致)**;doctor → 版本校验 → build → test → 模拟器冒烟 + 截图 artifact |
-| `release.yml` | tag 推送触发 → 校验 tag==version.properties → `bundle.sh` → `gh release create` |
+| `release.yml` | tag 推送触发 → 校验 tag==version.properties → matrix 调 EasyRelease(Developer ID + 公证 + staple)→ `ditto` zip + sha256 → `gh release create` |
 
 **重要(实测)**:`runs-on: macos-26` 默认只有 **Xcode 26.6**;只有 `xcode-27` 镜像才含
 Xcode 27.x(27.0 / 27.1 / 27.2,含 beta)。选版本时要**显式优先 27.0**,否则「取最高」会选到 beta。

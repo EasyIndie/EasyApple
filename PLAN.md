@@ -19,7 +19,7 @@
 2. **目标工具链 = Xcode 27.0**(macOS 27.0 已满足其 ≥26.6 要求)。见决策 D12。
 3. **arm64-only。** macOS 27 / Xcode 27 已无 Intel 构建,Intel Mac 记 out-of-scope。见 D13。
 4. **只用原生工具,不用第三方打包工具。** `.app` 由自写 `tools/bundle.sh` 拼装。见 D5。
-5. **首期只做模拟器闭环、零证书。** 真机/分发后置。见 D6。
+5. **开发闭环仍是模拟器 + 零证书;正式发布走 EasyRelease(Developer ID + 公证)。** 见 D6 / D17。
 
 ---
 
@@ -109,7 +109,7 @@
 ## Phase D — CI(`.github/workflows/`)
 
 - [x] **D1** `ci.yml`(✅ 已写:pin `macos-26`、选 Xcode 27、Conventional Commits 校验、doctor→sync-version→build→test→run-sim+截图→artifact)
-- [x] **D2** `release.yml`(✅ 已写:tag 触发 → 校验 tag==version.properties → bundle → `gh release create`)
+- [x] **D2** `release.yml`(✅ 已写:tag 触发 → 校验 tag==version.properties → bundle → `gh release create`;2026-10-24 改为 matrix 调 EasyRelease 签名/公证 → zip + sha256 → Release,见 D17)
 - [x] **D3** 开 Actions 验证首跑 → ✅ 成功。**发现**:`macos-26` 默认只有 Xcode 26.6;`xcode-27` 镜像含 27.0/27.1/27.2(+beta)。已改用 `xcode-27` + 优先选 `Xcode_27.0.0.app`(**Build 27A266a,与 Air 完全一致**);doctor/build/test/模拟器冒烟均绿。
 
 ---
@@ -168,6 +168,7 @@
 | 2026-10-22 | 集中维护 Apple Agent Skills:仓库技能共享安装、Xcode 官方技能导出、每周上游检查 PR;更新 README/AGENTS/知识库索引与 Air 当前环境快照 | 技能来源、许可与设备安装见 [docs/09](docs/09-agent-skills.md) |
 | 2026-10-24 | 发布能力外置:新建独立仓库 EasyRelease(composite action + reusable workflow),EasyApple 只做首个消费方 | 多项目复用需要独立版本与供应链边界,见 D16 |
 | 2026-10-24 | EasyRelease `apple-v0.4.0` 验证通过:EnvDemo 的 Developer ID 签名 + 公证 + staple + Gatekeeper;reusable workflow 支持 `secrets: inherit` | 组织共享凭据;run `40095862502` / `40096049639` / `40097027827` |
+| 2026-10-24 | 正式发布切换 EasyRelease:release.yml 产出签名/公证 zip + sha256,dry-run 通过 | 见 D17;run `40098005804` |
 
 ---
 
@@ -179,7 +180,7 @@
 |---|---|---|---|---|
 | A1 | 真机签名 + 装机运行 | [D6](docs/00-decisions.md) | 模拟器不校验签名,零门槛 | 免费 Apple ID(7 天 profile)或付费账号 |
 | A2 | 分发:TestFlight / App Store | D6 | 同上,且流程重 | 付费账号 + App Store Connect + 公证 |
-| A3 | macOS 产物公证(notarization) | D6 引申 | 现产物是 ad-hoc 签名,发别人会被 Gatekeeper 拦 | Developer ID 证书 + `notarytool` |
+| A3 | ~~macOS 产物公证(notarization)~~ ✅ 2026-10-24 完成 | D6 引申 | 已由 EasyRelease 实现(D17);`release.yml` 已切换 | — |
 | A4 | 精确无障碍树 | [D15](docs/00-decisions.md)、[docs/06](docs/06-ui-acceptance.md) | 宿主 AX 与无头冲突;XCUITest 需 xcodeproj | XCUITest + 一次性生成(不入库)`.xcodeproj`,或引入 idb |
 | A5 | 交互断言(tap/输入) | [docs/06](docs/06-ui-acceptance.md) §5 | `simctl` 无 tap | 同 A4 |
 

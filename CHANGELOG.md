@@ -9,6 +9,10 @@
 
 ### Added
 
+- **正式发布接入 EasyRelease**:`release.yml` 按 `apps/` matrix 调用
+  `EasyIndie/EasyRelease` reusable workflow，产出 Developer ID 签名 + 公证 + staple 的
+  `.app`，用 `ditto` 打 zip 并附 `.sha256`，不再发布 ad-hoc 包。支持
+  `workflow_dispatch + dry_run` 验证整条流水线。详见 `D17`。
 - **Apple 开发 Agent Skills**:集中维护 SwiftUI、Swift Concurrency 与 Apple 原生产品设计技能;可链接到 Codex 用户级共享目录,并从本机 Xcode 导出 Apple 官方技能。社区上游由每周 GitHub Actions 检查并创建审阅 PR。详见 [docs/09](docs/09-agent-skills.md)。
 - **iOS 运行时单测**:`tools/test-ios.sh`。用 Xcode 为 SwiftPM 包自动生成的聚合 scheme
   `<包名>-Package`，在 iOS 模拟器里跑单测（不再只靠宿主机 `swift test`），支持
@@ -21,6 +25,8 @@
 
 ### Changed
 
+- `release.yml`:从 ad-hoc 打包改为 EasyRelease 签名/公证发布;不再附带
+  `open-unsigned-app.sh`，下载解压后双击即可。
 - `verify-all` 的截图/断言步骤隐式获得确定性环境（无需改调用）。
 - CI:新增「测试(iOS 运行时)」阻塞步骤(`tools/test-ios.sh`),并上传 `result.xcresult` artifact。
 - CI 提速:缓存 `apps/*/.build`(含 iOS 模拟器 DerivedData)与 SwiftPM 包缓存,

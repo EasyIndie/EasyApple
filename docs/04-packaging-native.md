@@ -85,9 +85,9 @@ tools/run-sim.sh                      # 打包 + 装进模拟器 + 启动
 - **不支持 watchOS / App 扩展 / XCUITest / archive**(首期无此需求)。
 - 需要时再评估 XcodeGen 逃生舱(见 [research/04](research/04-swiftpm-packaging.md))。
 
-## 8. 分发:ad-hoc 产物会被 Gatekeeper 拦,以及怎么绕过
+## 8. 分发:本地 ad-hoc 会被拦,正式发布已签名 + 公证
 
-ad-hoc 签名的 `.app` 在**别的 Mac** 上双击会被拦(实测):
+本地 `bundle.sh` 产物是 ad-hoc 签名,在**别的 Mac** 上双击会被拦(实测):
 
 ```bash
 spctl -a -vv EnvDemo.app
@@ -96,7 +96,7 @@ spctl -a -vv EnvDemo.app
 
 原因:没有 Developer ID 签名(无 Team ID)、也没有公证票据。这是**预期行为**,不是 app 坏了。
 
-### 手动绕过(仅限你信任的产物)
+### 本地 ad-hoc 的手动绕过(仅限你信任的产物)
 
 1. **右键 → 打开**(首次);或
 2. **命令行去掉隔离属性**:
@@ -105,16 +105,17 @@ spctl -a -vv EnvDemo.app
    open EnvDemo.app
    ```
 
-### Release 产物自带打开脚本
+### 正式 Release:Developer ID + 公证 + staple
 
-`release.yml` 打包时会**判断产物是否 ad-hoc 签名**:
+`release.yml` 不再发布 ad-hoc 产物,而是:
 
-- **是**(现在)→ 压缩包里附带 `open-unsigned-app.sh`,下载后直接:
-  ```bash
-  tar -xzf EnvDemo-0.1.0.tar.gz
-  bash open-unsigned-app.sh     # 自动去隔离 + 打开
-  ```
-- **否**(将来做了 Developer ID 签名 + 公证,见 PLAN 附录 C 的 A3)→ **不附带**该脚本,双击即可。
+1. 按 `apps/` 列表 matrix 调用 EasyRelease reusable workflow;
+2. Developer ID 签名(`--options runtime --timestamp`);
+3. `notarytool` 公证 + `stapler staple`;
+4. `ditto` 打 zip(保留 bundle 元数据/公证票据)并生成 `.sha256`;
+5. `gh release create` 上传 zip + sha256。
 
-判断逻辑在 `tools/_common.sh` 的 `is_adhoc_signed()`(看 `Signature=adhoc` / `TeamIdentifier=not set`);
-脚本本体在 `tools/open-unsigned-app.sh`。
+因此 Release 包**不再附带 `open-unsigned-app.sh`**,下载解压后双击即可。
+实测 `spctl` 返回 `accepted` / `source=Notarized Developer ID`(2026-10-24,见 D17)。
+
+`is_adhoc_signed()` 与 `tools/open-unsigned-app.sh` 仍保留给本地调试,但不再进入 Release。

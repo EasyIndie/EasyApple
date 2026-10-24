@@ -20,7 +20,8 @@
 | **D13** | **arm64-only,Intel Mac 不纳入构建与分发。** | Xcode 27 / macOS 27 已无 Intel 构建;手里唯一 Intel(2015 MBP)永久出局。 | `accepted` | 要支持 Intel 须退回 Xcode 26.6 + universal 构建 + 降 target,见 PLAN 附录 A。 |
 | **D14** | **`xcodes` 仅用于 bootstrap 装机(装 Xcode + 模拟器 runtime),不进入构建/打包链路。** | 装机也要命令行化、可锁版本/架构;xcodes 是 Apple 下载页的自动化客户端,不改变 Xcode 本体。属于「装机」而非「构建/打包」,不违反 D5。 | `accepted` | 若要零第三方二进制,退路是官网直下 `.xip` + `xip --expand`。 |
 | **D15** | **文本级验收用原生 OCR(Apple Vision),不用 idb / 宿主 AX API / XCUITest。** | 实测:宿主 AX 路线要 `AXIsProcessTrusted` 为真 + Simulator.app GUI(`simctl boot` 无头启动时 `simulator app count: 0`,根本没宿主进程);XCUITest 需 `.xcodeproj`(与 D4/D5 冲突);idb 是第三方。Vision OCR 完全原生、免授权、无头 + CI 可跑(热跑 <1s)。代价:**有损识别**,断言用稳定串。 | `accepted` | 要**精确**无障碍树 / 交互断言时,只剩两条路:一次性生成(不入库)`.xcodeproj` 跑 XCUITest,或引入 idb —— 都需新决策。见 [docs/06](06-ui-acceptance.md)。 |
-| **D16** | **签名/公证等发布能力外置为独立仓库 `EasyIndie/EasyRelease`,EasyApple 不内置发布基础设施。** | 多项目复用需要独立版本与供应链边界;放进实践库会与产品版本、评审互相牵连。EasyRelease 以 composite action + reusable workflow 提供,坚持只用原生工具(受 D5 约束);EasyApple 作为首个消费方,先用 adhoc 验证接线。 | `accepted` | 需要跨仓库一键发布 / 排队 / 审计时,再评估 GitHub App(只做控制面),另行决策。 |
+| **D16** | **签名/公证等发布能力外置为独立仓库 `EasyIndie/EasyRelease`,EasyApple 不内置发布基础设施。** | 多项目复用需要独立版本与供应链边界;放进实践库会与产品版本、评审互相牵连。EasyRelease 以 composite action + reusable workflow 提供,坚持只用原生工具(受 D5 约束);EasyApple 作为首个消费方,已用组织共享凭据验证 Developer ID + 公证链路。 | `accepted` | 需要跨仓库一键发布 / 排队 / 审计时,再评估 GitHub App(只做控制面),另行决策。 |
+| **D17** | **正式发布改用 EasyRelease:tag 触发 → matrix 构建 → Developer ID 签名 + 公证 + staple → zip + sha256 → GitHub Release。** | 组织共享凭据已验证;发布物应双击可开,不再附带绕过 Gatekeeper 的脚本。签名实现只在 EasyRelease 维护,`release.yml` 只做编排与发布。 | `accepted` | 需要 App Store / TestFlight 时另开链路;回退可恢复旧 ad-hoc release(历史 tag 不受影响)。 |
 
 ## 变更记录
 
@@ -33,3 +34,4 @@
 | 2026-09-27 | 新增 D15(文本级验收用原生 OCR);D7 收窄为「截图为先」 |
 | 2026-10-24 | 新增 D16(发布能力外置为 EasyRelease;EasyApple 只做消费方) |
 | 2026-10-24 | D16 落地:EasyRelease `apple-v0.4.0`;EnvDemo 用组织共享凭据验证 Developer ID + 公证 + staple + Gatekeeper 全部通过;composite action(run `40095862502`)、reusable workflow(run `40096049639`)、`secrets: inherit`(run `40097027827`)三链路均验证 |
+| 2026-10-24 | 新增 D17:正式 `release.yml` 切换 EasyRelease,产出签名/公证 zip;dry-run run `40098005804` 通过 |
