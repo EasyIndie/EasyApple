@@ -47,7 +47,7 @@ jobs:
 
       - name: 先用 Developer ID 签 app(不单独公证)
         id: app
-        uses: EasyIndie/EasyRelease/apple@apple-v0.6.3
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.4
         with:
           artifact: ${{ env.APP }}
           mode: developer-id
@@ -72,7 +72,7 @@ jobs:
 
       - name: 签名 / 公证 / staple DMG
         id: dmg
-        uses: EasyIndie/EasyRelease/apple@apple-v0.6.3
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.4
         with:
           artifact: ${{ env.DMG }}
           mode: developer-id
@@ -141,7 +141,7 @@ jobs:
 
       - name: 签名 / 公证 / staple zip 内 app
         id: sign
-        uses: EasyIndie/EasyRelease/apple@apple-v0.6.3
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.4
         with:
           artifact: ${{ env.ZIP }}
           mode: developer-id

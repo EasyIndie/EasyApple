@@ -54,7 +54,7 @@ jobs:
 
       - name: 用 Apple ID + App 专用密码公证
         id: sign
-        uses: EasyIndie/EasyRelease/apple@apple-v0.6.3
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.4
         with:
           artifact: ${{ env.APP }}
           mode: developer-id

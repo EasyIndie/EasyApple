@@ -76,7 +76,7 @@ jobs:
 
       - name: 签名 / 公证 / staple pkg
         id: sign
-        uses: EasyIndie/EasyRelease/apple@apple-v0.6.3
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.4
         with:
           artifact: ${{ env.PKG }}
           mode: developer-id
