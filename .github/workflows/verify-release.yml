@@ -1,0 +1,86 @@
+name: Verify EasyRelease
+
+# 用组织共享凭据验证 EasyRelease 的 Developer ID 签名 + 公证链路。
+# 只做验证,不创建 Release。手动触发。
+on:
+  workflow_dispatch:
+    inputs:
+      notarize:
+        description: "是否提交 Apple 公证"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-easyrelease-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: xcode-27
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选择 Xcode 27(优先 27.0 稳定版)
+        run: |
+          shopt -s nullglob
+          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          pick=""
+          for p in "${all[@]}"; do
+            case "$p" in *27.0*) pick="$p"; break;; esac
+          done
+          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
+          fi
+          if [ -n "$pick" ]; then
+            sudo xcode-select -s "$pick/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: 构建 macOS EnvDemo(ad-hoc 产物)
+        run: bash tools/bundle.sh --app EnvDemo --platform macOS
+
+      - name: 签名 / 公证 / 校验(EasyRelease)
+        id: sign
+        uses: EasyIndie/EasyRelease/apple@apple-v0.2.0
+        with:
+          artifact: apps/EnvDemo/.build/bundle/EnvDemo.app
+          mode: developer-id
+          notarize: ${{ inputs.notarize }}
+          identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
+          p12_base64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          p12_password: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
+          asc_key_id: ${{ secrets.APPLE_ASC_API_KEY_ID }}
+          asc_issuer_id: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+          asc_key_p8: ${{ secrets.APPLE_ASC_API_KEY }}
+          debug: "true"
+
+      - name: 输出校验信息
+        env:
+          APP: ${{ steps.sign.outputs.signed_artifact }}
+          MANIFEST: ${{ steps.sign.outputs.manifest_path }}
+          NOTARIZE: ${{ inputs.notarize }}
+        run: |
+          set -euo pipefail
+          codesign -dv --verbose=4 "$APP" 2>&1
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          python3 -m json.tool "$MANIFEST"
+          if [ "$NOTARIZE" = "true" ]; then
+            xcrun stapler validate "$APP"
+            spctl -a -vvv -t exec "$APP"
+          fi
+
+      - name: 上传签名产物与 manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: easyrelease-verify-${{ github.run_id }}
+          path: |
+            apps/EnvDemo/.build/bundle/EnvDemo.app
+            ${{ steps.sign.outputs.manifest_path }}
+          if-no-files-found: warn
+          include-hidden-files: true
