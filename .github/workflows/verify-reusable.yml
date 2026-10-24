@@ -1,0 +1,35 @@
+name: Verify EasyRelease Reusable
+
+# 验证 EasyRelease 的 reusable workflow(含 .easyrelease 本地 action 路径、构建、上传)。
+# 只做验证,不创建 Release。手动触发。
+on:
+  workflow_dispatch:
+    inputs:
+      notarize:
+        description: "是否提交 Apple 公证"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.3.0
+    with:
+      runs_on: xcode-27
+      kit_ref: apple-v0.3.0
+      app: EnvDemo
+      bundle_id: com.easyapple.envdemo
+      build_command: bash tools/bundle.sh --app EnvDemo --platform macOS
+      mode: developer-id
+      notarize: ${{ inputs.notarize }}
+      identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
+      release: false
+      upload_artifact: true
+    secrets:
+      APPLE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+      APPLE_P12_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
+      ASC_KEY_ID: ${{ secrets.APPLE_ASC_API_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.APPLE_ASC_API_KEY }}
