@@ -61,8 +61,6 @@ jobs:
       fail-fast: false
       matrix:
         app: ${{ fromJSON(needs.prepare.outputs.apps) }}
-    permissions:
-      contents: read
     uses: EasyIndie/EasyRelease/.github/workflows/apple-release.yml@apple-v0.5.0
     with:
       runs_on: xcode-27
