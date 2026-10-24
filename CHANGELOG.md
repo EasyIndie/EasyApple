@@ -13,7 +13,7 @@
   EasyApple run `40105139059`,submission `aa154aa3-...`,Installer 身份签名,
   `spctl -t install` 通过。
 - **Apple ID + App 专用密码公证验证通过**:EasyApple run `40101281656`,
-  submission `cff3b8b8-...`;`.pkg` 的 Installer 身份支持已加入 `verify-pkg.yml`(待证书)。
+  submission `cff3b8b8-...`;`.pkg` 已用真实 Installer 证书验证通过(run `40105139059`)。
 - **EasyRelease 支持 `.dmg` / `.zip` 与 App 专用密码**:`.dmg` 已完成 Developer ID +
   公证 + staple 真链路验证;`.zip` 支持「解包 → 签名/公证/staple 内层 → 重新打包 →
   再解压校验」;公证认证可选 API Key 或 Apple ID + App 专用密码。
