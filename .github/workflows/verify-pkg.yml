@@ -1,0 +1,114 @@
+name: Verify PKG
+
+# 验证 .pkg 的 Developer ID Installer 签名 + 公证 + staple。
+# 需要先配置 Installer 证书 secrets(见 docs/pkg.md);未配置时会在 preflight 明确失败。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-pkg-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选择 Xcode 27(优先 27.0 稳定版)
+        run: |
+          shopt -s nullglob
+          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          pick=""
+          for p in "${all[@]}"; do
+            case "$p" in *27.0*) pick="$p"; break;; esac
+          done
+          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
+          fi
+          if [ -n "$pick" ]; then
+            sudo xcode-select -s "$pick/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: 检查 Installer 配置
+        env:
+          INSTALLER_P12: ${{ secrets.APPLE_INSTALLER_P12_BASE64 }}
+          INSTALLER_PASSWORD: ${{ secrets.APPLE_INSTALLER_P12_PASSWORD }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ASC_KEY_ID: ${{ secrets.APPLE_ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.APPLE_ASC_API_KEY }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -n "$INSTALLER_P12" ] || missing+=(APPLE_INSTALLER_P12_BASE64)
+          [ -n "$INSTALLER_PASSWORD" ] || missing+=(APPLE_INSTALLER_P12_PASSWORD)
+          [ -n "$TEAM_ID" ] || missing+=(APPLE_TEAM_ID)
+          [ -n "$ASC_KEY_ID" ] || missing+=(APPLE_ASC_API_KEY_ID)
+          [ -n "$ASC_ISSUER_ID" ] || missing+=(APPLE_ASC_ISSUER_ID)
+          [ -n "$ASC_KEY_P8" ] || missing+=(APPLE_ASC_API_KEY)
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::缺少 secrets: ${missing[*]};见 EasyRelease docs/pkg.md"
+            exit 1
+          fi
+
+      - name: 构建 app 并制作 pkg
+        run: |
+          set -euo pipefail
+          bash tools/bundle.sh --app EnvDemo --platform macOS
+          APP="$PWD/apps/EnvDemo/.build/bundle/EnvDemo.app"
+          VERSION="$(sed -n 's/^version=//p' version.properties | head -1 | tr -d '[:space:]')"
+          root="$RUNNER_TEMP/pkg-root"
+          rm -rf "$root"
+          mkdir -p "$root"
+          ditto "$APP" "$root/EnvDemo.app"
+          pkgbuild --root "$root" \
+            --identifier com.easyapple.envdemo \
+            --version "$VERSION" \
+            --install-location /Applications \
+            "$RUNNER_TEMP/EnvDemo.pkg"
+          echo "PKG=$RUNNER_TEMP/EnvDemo.pkg" >> "$GITHUB_ENV"
+
+      - name: 签名 / 公证 / staple pkg
+        id: sign
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.3
+        with:
+          artifact: ${{ env.PKG }}
+          mode: developer-id
+          notarize: "true"
+          team_id: ${{ secrets.APPLE_TEAM_ID }}
+          identity: ${{ vars.MACOS_INSTALLER_IDENTITY }}
+          p12_base64: ${{ secrets.APPLE_INSTALLER_P12_BASE64 }}
+          p12_password: ${{ secrets.APPLE_INSTALLER_P12_PASSWORD }}
+          asc_key_id: ${{ secrets.APPLE_ASC_API_KEY_ID }}
+          asc_issuer_id: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+          asc_key_p8: ${{ secrets.APPLE_ASC_API_KEY }}
+
+      - name: 校验 pkg
+        env:
+          PKG: ${{ env.PKG }}
+          MANIFEST: ${{ steps.sign.outputs.manifest_path }}
+        run: |
+          set -euo pipefail
+          pkgutil --check-signature "$PKG"
+          xcrun stapler validate "$PKG"
+          spctl -a -vvv -t install "$PKG"
+          python3 -m json.tool "$MANIFEST"
+          plutil -extract inner_kind raw -o - "$MANIFEST" | grep -qx pkg
+          plutil -extract notarized raw -o - "$MANIFEST" | grep -qx true
+          plutil -extract verified raw -o - "$MANIFEST" | grep -qx true
+
+      - name: 上传 pkg 与 manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-pkg-${{ github.run_id }}
+          path: |
+            ${{ env.PKG }}
+            ${{ steps.sign.outputs.manifest_path }}
+          if-no-files-found: warn
