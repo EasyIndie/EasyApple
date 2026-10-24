@@ -111,3 +111,14 @@
 - **解法**:截图前 `xcrun simctl status_bar <udid> override --time 09:41 ...`,截完 `clear`。
   `ui-dump` / `ui-scan` / `ui-assert` 已内置(`_common.sh` 的 `ui_env_lock` / `ui_env_restore`,
   截完自动恢复);要保留真实状态时加 `--no-fix-status`。
+
+## 17. 调用 reusable workflow 时,caller job 降权会导致 startup_failure
+
+- **症状**:`workflow_dispatch` 刚创建就 `startup_failure`,run 的 `jobs` 为空、没有任何日志。
+- **复现**:`release.yml` 顶层 `permissions: contents: write`,但调用 reusable workflow 的 job 写了
+  `permissions: contents: read`;被调 workflow 的 job 需要 `contents: write`。
+- **原因**:reusable workflow 的权限虽然「只能降级」,但这个降级组合在**启动阶段**就被拒了,
+  不会进入 job 执行,所以看不到任何报错。
+- **解法**:caller job 不要低于被调 workflow 所需权限(本次直接移除 job 级 `permissions`,继承顶层
+  `contents: write`)。改动后同一 `workflow_dispatch` 正常进入 `prepare`。
+- **教训**:reusable workflow 的 `startup_failure` 优先查 caller/called 的 `permissions` 是否匹配。
