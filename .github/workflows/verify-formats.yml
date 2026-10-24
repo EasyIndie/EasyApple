@@ -1,0 +1,182 @@
+name: Verify Apple Formats
+
+# 用组织共享凭据验证 EasyRelease 的 .dmg 与 .zip 输入链路。
+# 手动触发;只做验证,不创建 Release。
+on:
+  workflow_dispatch:
+    inputs:
+      notarize:
+        description: "是否提交 Apple 公证"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-apple-formats-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  dmg:
+    runs-on: xcode-27
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选择 Xcode 27(优先 27.0 稳定版)
+        run: |
+          shopt -s nullglob
+          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          pick=""
+          for p in "${all[@]}"; do
+            case "$p" in *27.0*) pick="$p"; break;; esac
+          done
+          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
+          fi
+          if [ -n "$pick" ]; then
+            sudo xcode-select -s "$pick/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: 构建 macOS EnvDemo
+        run: |
+          bash tools/bundle.sh --app EnvDemo --platform macOS
+          echo "APP=$PWD/apps/EnvDemo/.build/bundle/EnvDemo.app" >> "$GITHUB_ENV"
+
+      - name: 先用 Developer ID 签 app(不单独公证)
+        id: app
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.0
+        with:
+          artifact: ${{ env.APP }}
+          mode: developer-id
+          notarize: "false"
+          identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
+          p12_base64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          p12_password: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
+          asc_key_id: ${{ secrets.APPLE_ASC_API_KEY_ID }}
+          asc_issuer_id: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+          asc_key_p8: ${{ secrets.APPLE_ASC_API_KEY }}
+
+      - name: 制作 DMG
+        run: |
+          set -euo pipefail
+          stage="$RUNNER_TEMP/dmg-stage"
+          rm -rf "$stage"
+          mkdir -p "$stage"
+          ditto "$APP" "$stage/EnvDemo.app"
+          ln -s /Applications "$stage/Applications"
+          hdiutil create -volname EnvDemo -srcfolder "$stage" -ov -format UDZO "$RUNNER_TEMP/EnvDemo.dmg"
+          echo "DMG=$RUNNER_TEMP/EnvDemo.dmg" >> "$GITHUB_ENV"
+
+      - name: 签名 / 公证 / staple DMG
+        id: dmg
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.0
+        with:
+          artifact: ${{ env.DMG }}
+          mode: developer-id
+          notarize: ${{ inputs.notarize }}
+          identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
+          p12_base64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          p12_password: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
+          asc_key_id: ${{ secrets.APPLE_ASC_API_KEY_ID }}
+          asc_issuer_id: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+          asc_key_p8: ${{ secrets.APPLE_ASC_API_KEY }}
+
+      - name: 校验 DMG
+        env:
+          DMG: ${{ env.DMG }}
+          MANIFEST: ${{ steps.dmg.outputs.manifest_path }}
+          NOTARIZE: ${{ inputs.notarize }}
+        run: |
+          set -euo pipefail
+          codesign -dv --verbose=4 "$DMG" 2>&1
+          codesign --verify --deep --strict "$DMG"
+          python3 -m json.tool "$MANIFEST"
+          if [ "$NOTARIZE" = "true" ]; then
+            xcrun stapler validate "$DMG"
+            spctl -a -vvv -t open --context context:primary-signature "$DMG"
+          fi
+
+      - name: 上传 DMG 与 manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-dmg-${{ github.run_id }}
+          path: |
+            ${{ env.DMG }}
+            ${{ steps.dmg.outputs.manifest_path }}
+          if-no-files-found: warn
+
+  zip:
+    runs-on: xcode-27
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 选择 Xcode 27(优先 27.0 稳定版)
+        run: |
+          shopt -s nullglob
+          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
+          pick=""
+          for p in "${all[@]}"; do
+            case "$p" in *27.0*) pick="$p"; break;; esac
+          done
+          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
+            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
+          fi
+          if [ -n "$pick" ]; then
+            sudo xcode-select -s "$pick/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: 构建并打成待处理 zip
+        run: |
+          set -euo pipefail
+          bash tools/bundle.sh --app EnvDemo --platform macOS
+          APP="$PWD/apps/EnvDemo/.build/bundle/EnvDemo.app"
+          ditto -c -k --keepParent "$APP" "$RUNNER_TEMP/EnvDemo.zip"
+          echo "ZIP=$RUNNER_TEMP/EnvDemo.zip" >> "$GITHUB_ENV"
+
+      - name: 签名 / 公证 / staple zip 内 app
+        id: sign
+        uses: EasyIndie/EasyRelease/apple@apple-v0.6.0
+        with:
+          artifact: ${{ env.ZIP }}
+          mode: developer-id
+          notarize: ${{ inputs.notarize }}
+          identity: ${{ vars.MACOS_SIGNING_IDENTITY }}
+          p12_base64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          p12_password: ${{ secrets.APPLE_CERTIFICATE_P12_PASSWORD }}
+          asc_key_id: ${{ secrets.APPLE_ASC_API_KEY_ID }}
+          asc_issuer_id: ${{ secrets.APPLE_ASC_ISSUER_ID }}
+          asc_key_p8: ${{ secrets.APPLE_ASC_API_KEY }}
+
+      - name: 校验重新打包的 zip
+        env:
+          SIGNED: ${{ steps.sign.outputs.signed_artifact }}
+          MANIFEST: ${{ steps.sign.outputs.manifest_path }}
+          NOTARIZE: ${{ inputs.notarize }}
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/unzip-check"
+          mkdir -p "$RUNNER_TEMP/unzip-check"
+          ditto -x -k "$SIGNED" "$RUNNER_TEMP/unzip-check"
+          APP="$RUNNER_TEMP/unzip-check/EnvDemo.app"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          python3 -m json.tool "$MANIFEST"
+          if [ "$NOTARIZE" = "true" ]; then
+            xcrun stapler validate "$APP"
+            spctl -a -vvv -t exec "$APP"
+          fi
+
+      - name: 上传签名 zip 与 manifest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-zip-${{ github.run_id }}
+          path: |
+            ${{ steps.sign.outputs.signed_artifact }}
+            ${{ steps.sign.outputs.manifest_path }}
+          if-no-files-found: warn
