@@ -42,7 +42,7 @@ UDID="$(simctl_resolve_device "$DEVICE_QUERY")"
 trap ui_env_restore EXIT
 ui_env_lock "$UDID" "$FIX_STATUS" "$APPEARANCE" "$CONTENT_SIZE"
 
-xcrun simctl io "$UDID" screenshot "$OUT" >/dev/null
+run_timeout 60 xcrun simctl io "$UDID" screenshot "$OUT" >/dev/null
 
 ui_env_restore
 

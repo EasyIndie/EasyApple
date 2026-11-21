@@ -22,6 +22,19 @@ ok()   { printf '\033[1;32m[ ok ]\033[0m %s\n' "$*"; }
 skip() { printf '\033[1;33m[skip]\033[0m %s\n' "$*"; }
 die()  { printf '\033[1;31m[die ]\033[0m %s\n' "$*" >&2; exit 1; }
 
+# 可移植超时:优先 GNU timeout,其次 perl alarm,都没有就直接跑。
+# 用途:CI 上 simctl / Vision OCR 偶发挂起,必须有上界,不能把 job 拖到 60 分钟超时。
+run_timeout() {
+  local secs="$1"; shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$secs" "$@"
+  elif command -v perl >/dev/null 2>&1; then
+    perl -e 'alarm shift; exec @ARGV' "$secs" "$@"
+  else
+    "$@"
+  fi
+}
+
 # 从 version.properties 读版本(唯一来源)
 version_from_props() {
   local v

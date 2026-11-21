@@ -77,6 +77,9 @@ jobs:
 
       - name: 模拟器冒烟 + 文本断言(遍历所有应用)
         continue-on-error: true
+        # 模拟器/OCR 在 VM 上偶发挂起;脚本内部已加 run_timeout,这里再加一道上限,
+        # 避免把整个 job 拖到 60 分钟。
+        timeout-minutes: 20
         run: |
           set -uo pipefail
           source tools/_common.sh

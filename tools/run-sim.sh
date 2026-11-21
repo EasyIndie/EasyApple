@@ -43,18 +43,18 @@ note "设备: $UDID"
 if ! xcrun simctl list devices | grep -F "$UDID" | grep -q "(Booted)"; then
   note "启动模拟器…"
   xcrun simctl boot "$UDID" 2>/dev/null || true
-  xcrun simctl bootstatus "$UDID" -b >/dev/null
+  run_timeout 180 xcrun simctl bootstatus "$UDID" -b >/dev/null
 fi
 
 note "安装 $APP_NAME.app"
-xcrun simctl install "$UDID" "$BUNDLE"
+run_timeout 180 xcrun simctl install "$UDID" "$BUNDLE"
 
 note "启动 $BUNDLE_ID"
-xcrun simctl launch "$UDID" "$BUNDLE_ID"
+run_timeout 120 xcrun simctl launch "$UDID" "$BUNDLE_ID"
 
 if [ -n "$SHOT" ]; then
   sleep 3
-  xcrun simctl io "$UDID" screenshot "$SHOT" >/dev/null
+  run_timeout 60 xcrun simctl io "$UDID" screenshot "$SHOT" >/dev/null
   ok "截图: $SHOT"
 fi
 ok "已在 $UDID 上启动 $APP_NAME"

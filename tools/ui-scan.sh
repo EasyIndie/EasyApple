@@ -45,7 +45,7 @@ if [ -z "$INPUT" ]; then
   INPUT="$REPO_ROOT/.tmp/ui-scan-$(date +%Y%m%d-%H%M%S).png"
   trap ui_env_restore EXIT
   ui_env_lock "$UDID" "$FIX_STATUS" "$APPEARANCE" "$CONTENT_SIZE"
-  xcrun simctl io "$UDID" screenshot "$INPUT" >/dev/null
+  run_timeout 60 xcrun simctl io "$UDID" screenshot "$INPUT" >/dev/null
   ui_env_restore          # exec 会替掉当前 shell,trap 不会跑,所以先恢复
   trap - EXIT
   note "截图: $INPUT" >&2
@@ -54,4 +54,4 @@ fi
 
 BIN="$(ensure_uiscan)"
 [ -x "$BIN" ] || die "uiscan 不可用(编译失败?)"
-exec "$BIN" "$INPUT" "${EXTRA[@]+"${EXTRA[@]}"}"
+run_timeout 180 "$BIN" "$INPUT" "${EXTRA[@]+"${EXTRA[@]}"}"

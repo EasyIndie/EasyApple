@@ -69,7 +69,7 @@ if [ -z "$INPUT" ]; then
   INPUT="$REPO_ROOT/.tmp/ui-assert-$(date +%Y%m%d-%H%M%S).png"
   trap ui_env_restore EXIT
   ui_env_lock "$UDID" "$FIX_STATUS" "$APPEARANCE" "$CONTENT_SIZE"
-  xcrun simctl io "$UDID" screenshot "$INPUT" >/dev/null
+  run_timeout 60 xcrun simctl io "$UDID" screenshot "$INPUT" >/dev/null
   ui_env_restore
   trap - EXIT
   note "截图: $INPUT" >&2
@@ -78,7 +78,7 @@ fi
 
 BIN="$(ensure_uiscan)"
 [ -x "$BIN" ] || die "uiscan 不可用(编译失败?)"
-TEXT="$("$BIN" "$INPUT")" || die "OCR 失败: $INPUT"
+TEXT="$(run_timeout 180 "$BIN" "$INPUT")" || die "OCR 失败或超时: $INPUT"
 
 FAILED=0
 for needle in ${CONTAINS[@]+"${CONTAINS[@]}"}; do
