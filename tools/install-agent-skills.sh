@@ -32,13 +32,36 @@ done
 # Apple-authored skills remain sourced from the installed Xcode distribution.
 if command -v xcrun >/dev/null 2>&1 && xcrun agent skills export --help >/dev/null 2>&1; then
   APPLE_SKILLS="$HOME/Library/Developer/Xcode/CodingAssistant/codex/skills/__xcode"
-  mkdir -p "$APPLE_SKILLS"
-  xcrun agent skills export --replace-existing --output-dir "$APPLE_SKILLS"
+  # 全量重建导出目录:Xcode 升级后技能会增删,而 --replace-existing 只覆盖同名目录,
+  # 不删除已从 Xcode 移除的旧技能(实测 27.0 → 27.2 少了 uikit-app-modernization,
+  # 多了 app-resizability / xctrace)。先导到临时目录,成功后再整体替换,避免半成品。
+  APPLE_SKILLS_TMP="$(mktemp -d "$APPLE_SKILLS.tmp.XXXXXX")"
+  trap 'rm -rf "$APPLE_SKILLS_TMP"' EXIT
+  xcrun agent skills export --output-dir "$APPLE_SKILLS_TMP"
+  rm -rf "$APPLE_SKILLS"
+  mv "$APPLE_SKILLS_TMP" "$APPLE_SKILLS"
+  trap - EXIT
+
   # 导出的部分技能描述超过 Agent Skills 规范的 1024 字符上限（pi/Claude 会拒绝加载），
   # 这里用仓库维护的短描述覆盖；重新导出后依然生效。
   python3 "$ROOT/tools/apply-skill-description-overrides.py" \
     --overrides "$ROOT/tools/apple-skill-descriptions.json" \
     --skills "$APPLE_SKILLS"
+
+  # 清掉指向 __xcode 但目标已不存在的旧链接(只动本脚本管理的符号链接)。
+  for link in "$USER_SKILLS"/*; do
+    [[ -L "$link" ]] || continue
+    target="$(readlink "$link")"
+    case "$target" in
+      "$APPLE_SKILLS"/*)
+        if [[ ! -e "$target" ]]; then
+          rm -f "$link"
+          echo "已清理失效的 Xcode 技能链接: $(basename "$link")"
+        fi
+        ;;
+    esac
+  done
+
   for source in "$APPLE_SKILLS"/*; do
     [[ -d "$source" && -f "$source/SKILL.md" ]] || continue
     link_skill "$(basename "$source")" "$source"

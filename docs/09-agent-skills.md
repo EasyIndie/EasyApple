@@ -1,6 +1,6 @@
 # Apple 开发 Agent Skills
 
-> 状态：已落地；更新时间：2026-10-22。
+> 状态：已落地；更新时间：2026-11-22。
 
 本仓库维护可在多个 Apple 项目复用的 Codex 技能。通过 `tools/install-agent-skills.sh` 将仓库技能链接到当前 Mac 的 `~/.agents/skills/`，因此无需在每个项目重复安装。克隆 EasyApple 的新设备运行一次该脚本即可；Codex 重启或新建会话后发现技能。
 
@@ -13,7 +13,7 @@
 | `apple-native-product-design` | EasyApple 维护的 Apple 原生产品设计流程，GPL-3.0-or-later | 随本仓库人工审阅更新；不依赖 Figma |
 | Xcode 导出的 Apple 技能 | 当前选择的 Xcode；Apple 官方说明可用 `xcrun agent skills export` 导出供其他工具使用 | 在安装/升级 Xcode 后运行安装脚本刷新。导出文件保留在本机 Xcode Coding Assistant 目录，不复制进仓库 |
 
-Xcode 27 当前导出 SwiftUI、UIKit、App Intents、安全、测试、设备交互等官方技能。仓库不镜像这些未附单独再分发许可的导出文件；安装脚本从本机已安装的 Xcode 生成并链接它们。Apple 的导出方式见 [WWDC26 SwiftUI 新功能](https://developer.apple.com/videos/play/wwdc2026/269/) 和 [Xcode 27 Release Notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27-release-notes)。
+Xcode 27.2 当前导出 **11 个**官方技能（SwiftUI / App Intents / 安全 / 测试 / 设备交互 / 界面可调整性 / Instruments 等）。仓库不镜像这些未附单独再分发许可的导出文件；安装脚本从本机已安装的 Xcode 生成并链接它们。Apple 的导出方式见 [WWDC26 SwiftUI 新功能](https://developer.apple.com/videos/play/wwdc2026/269/) 和 [Xcode 27 Release Notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-27-release-notes)。
 
 ## 安装与刷新
 
