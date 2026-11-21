@@ -7,13 +7,25 @@
 
 ## [Unreleased]
 
-## [0.4.0] - 2026-11-22
+## [0.4.1] - 2026-11-22
 
 ### Added
 
 - **官方技能导出全量重建**:Xcode 27.2 导出 11 个技能(新增 `app-resizability` / `xctrace`);
   安装脚本改为临时目录 + 整体替换,并清理目标已不存在的旧链接(27.0 的 `uikit-app-modernization`)。
 - **社区技能更新**:合并 PR #1,`swiftui-pro` 同步到上游 `f2920b6`(`swift-concurrency-pro` 已最新)。
+
+### Fixed
+
+- **发布 job 缺少 checkout**:`gh release create --verify-tag` 报 `fatal: not a git repository`;
+  publish job 现在先检出仓库(修复后才补发 0.4.0 Release)。
+- **模拟器/OCR 调用可能挂死**:`run_timeout` 包住 simctl boot/install/launch/screenshot 与
+  Vision OCR,CI 冒烟步骤加 20 分钟上限。
+
+## [0.4.0] - 2026-11-22
+
+### Added
+
 - **工程化收口(对齐 EasyAndroid 的结构化实践)**
   - `template/`:模板从 `apps/EnvDemo` 独立,`new-app.sh` 改为从模板生成(D18);
     `tools/test-template.sh` 做模板冒烟(临时生成 → build → test → 清理)。
@@ -63,10 +75,6 @@
 
 ### Fixed
 
-- **发布 job 缺少 checkout**:`gh release create --verify-tag` 报 `fatal: not a git repository`;
-  publish job 现在先检出仓库(修复后才补发 0.4.0 Release)。
-- **模拟器/OCR 调用可能挂死**:`run_timeout` 包住 simctl boot/install/launch/screenshot 与
-  Vision OCR,CI 冒烟步骤加 20 分钟上限。
 - **文档环境快照过期**:文档仍写 Xcode 27.0 / macOS 27.0.1,实机已是 27.2;
   CI 仍选 27.0 却声称「与 Air 一致」。现统一到 27.2,选择逻辑收进 composite action。
 - **`docs/README` 决策索引漂移**:仍写 D1–D16,实际已有 D17;`repo-check` 现在会拦。
