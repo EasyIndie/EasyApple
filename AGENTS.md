@@ -5,7 +5,7 @@
 本仓库是 **Apple 平台(iOS/macOS)无 IDE 命令行开发**的实践沉淀库,对标
 [`EasyIndie/EasyAndroid`](https://github.com/EasyIndie/EasyAndroid)。
 
-> **当前阶段:执行期。** 开发机 = **M1 Air(macOS 27.0 / arm64)**。构建、模拟器、
+> **当前阶段:执行期。** 开发机 = **M1 Air(macOS 27.2 / Xcode 27.2 / arm64)**。构建、模拟器、
 > 验收都在本机完成。规划期(Windows 上推演)已结束,交接文档已删除。
 
 ---
@@ -15,7 +15,7 @@
 1. **构建/模拟器只能在 macOS 上。** iOS 模拟器是 macOS 原生 App(依赖 CoreSimulator
    + Darwin),原理上不可跨平台。依据:
    [docs/research/03-simulator-cross-platform.md](docs/research/03-simulator-cross-platform.md)。
-2. **构建必须装完整 Xcode(当前锁 Xcode 27.0),但可以从不打开 GUI。**
+2. **构建必须装完整 Xcode(当前锁 Xcode 27.2),但可以从不打开 GUI。**
    只有 Command Line Tools 拿不到 iOS SDK。见
    [docs/research/01-apple-platform-rules-2026.md](docs/research/01-apple-platform-rules-2026.md) §5。
 3. **arm64-only,Intel Mac 不纳入构建与分发。** macOS 27 / Xcode 27 已无 Intel 构建;
@@ -26,7 +26,7 @@
    `simctl` 拼装。见 D5。
 5. **不要把「桌面推演」写成「已验证」。**
    - 规划期调研在 `docs/research/`,措辞用「来源」「怎么复核」;
-   - 只有真机跑通的结论才写进执行期文档(`docs/01`…`docs/09`),措辞用「已验证」;
+   - 只有在本机实测跑通的结论才写进执行期文档(`docs/01`…`docs/10`),措辞用「已验证」;
    - 没有把握就标注「⚠️ 推测」。
 6. **不要把真实内网 IP / 密钥 / token 写进任何被跟踪的文件。**
    文档示例统一用 RFC 5737 保留段(`192.0.2.x`)。提交前跑一次:
