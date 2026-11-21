@@ -86,6 +86,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      # gh release create --verify-tag 需要本地有 git 仓库与 tag;
+      # 这里不构建,但必须检出(失败信息:fatal: not a git repository)。
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: 下载签名产物
         uses: actions/download-artifact@v4
         with:
