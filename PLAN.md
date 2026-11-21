@@ -3,7 +3,7 @@
 > **这份文件是「活文档」,随执行进度直接改。**
 > 状态图例:`[ ]` 未做 · `[~]` 进行中 · `[x]` 已完成 · `[-]` 已砍掉。
 >
-> 开发机 = M1 Air(macOS 27.0.1 / arm64;2026-10-22 核验)。所有任务都在本机完成。
+> 开发机 = M1 Air(macOS 27.2 / Xcode 27.2 / arm64;2026-11-22 核验)。所有任务都在本机完成。
 
 ---
 
@@ -16,7 +16,7 @@
 ### 0.1 硬前提(已定,不反复)
 
 1. **构建只能在 macOS 上**,且必须装**完整 Xcode**(可从不打开 GUI)。
-2. **目标工具链 = Xcode 27.0**(macOS 27.0 已满足其 ≥26.6 要求)。见决策 D12。
+2. **目标工具链 = Xcode 27 系列的最新稳定版**(当前 27.2,排除 beta;本地与 CI 同版本)。见决策 D21。
 3. **arm64-only。** macOS 27 / Xcode 27 已无 Intel 构建,Intel Mac 记 out-of-scope。见 D13。
 4. **只用原生工具,不用第三方打包工具。** `.app` 由自写 `tools/bundle.sh` 拼装。见 D5。
 5. **开发闭环仍是模拟器 + 零证书;正式发布走 EasyRelease(Developer ID + 公证)。** 见 D6 / D17。
@@ -27,14 +27,14 @@
 
 > 规划期在 Windows 上推演的版本矩阵,已在 Air 上部分核实。
 
-- [x] **P0.1** `sw_vers` → **macOS 27.0.1**(build `26A434`,2026-10-22 核验;初次核验为 27.0 / `26A428`)
+- [x] **P0.1** `sw_vers` → **macOS 27.2**(build `26B123`,2026-11-22 核验;历史:27.0.1 / `26A434`、27.0 / `26A428`)
 - [x] **P0.2** 芯片 → **Apple Silicon M1**(arm64,`T8103`)
 - [x] **P0.3** Homebrew → ✅ 已装(`/opt/homebrew/bin/brew`)
 - [x] **P0.4** Command Line Tools → ✅ 已装(`/Library/Developer/CommandLineTools`);初次核验时为 active dev dir,2026-10-22 当前已切换到完整 Xcode
-- [x] **P0.5** `xcodebuild -version` → ✅ **Xcode 27.0 / Build 27A266a**;2026-10-22 核验 `xcode-select -p` 已指向 `/Applications/Xcode-27.0.0.app/Contents/Developer`
-- [x] **P0.6** `xcrun --sdk iphonesimulator --show-sdk-path` → ✅ `.../iPhoneSimulator27.0.sdk`(iOS SDK 在)
-- [x] **P0.7** `xcrun simctl list runtimes` → ✅ 2026-10-22 核验已有 **iOS 26.4、iOS 27.0、visionOS 26.0**(iOS 27.0 build `24A434`)
-- [x] **P0.8** `swift --version` → ✅ **Swift 6.4**(已摘掉 swiftly 的 PATH 注入,`swift` 现解析到 `/usr/bin/swift` → Xcode 6.4)
+- [x] **P0.5** `xcodebuild -version` → ✅ **Xcode 27.2 / Build 27B52**(2026-11-22 核验;历史 27.0 / 27A266a);`xcode-select -p` 指向 `/Applications/Xcode.app/Contents/Developer`
+- [x] **P0.6** `xcrun --sdk iphonesimulator --show-sdk-path` → ✅ `.../iPhoneSimulator27.2.sdk`(iOS SDK 在)
+- [x] **P0.7** `xcrun simctl list runtimes` → ✅ 2026-11-22 核验为 **iOS 27.2**(`24B8117`);旧 runtime(iOS 26.4 / 27.0)已随 Xcode 升级清理
+- [x] **P0.8** `swift --version` → ✅ **Swift 6.4.2**(已摘掉 swiftly 的 PATH 注入,`swift` 现解析到 `/usr/bin/swift` → Xcode 6.4.2)
 
 > ✅ **swiftly 坑已修复**:`~/.zprofile` 里的 `. "/Users/joker/.swiftly/env.sh"` 已删除,新 shell 的 `swift` 解析到 `/usr/bin/swift`(Xcode Swift 6.4)。工具脚本里仍建议用 `xcrun swift` 更稳。
 
@@ -42,15 +42,16 @@
 
 ## Phase 1 — 工具链安装 + 原生打包原型
 
-- [x] **P1.1** 用 `xcodes` 安装 **Xcode 27.0 / 27A266a**(当时为 2.1.0;2026-10-22 核验 `xcodes` 当前未安装,它仅用于装机,不影响已安装工具链)
-- [x] **P1.2** `sudo xcodebuild -license accept` + `xcodes select 27.0`(✅ `xcode-select -p` 已指向 Xcode)
-- [x] **P1.3** 下载 iOS 模拟器 runtime:✅ `xcodes runtimes install "iOS 27.0"`(iOS 27.0 / 24A434 已装)
+- [x] **P1.1** 用 `xcodes` 安装 **Xcode 27 系列**(起点 27.0 / 27A266a,现为 27.2 / 27B52;`xcodes` 2.1.0,仅用于装机)
+- [x] **P1.2** `sudo xcodebuild -license accept` + `xcodes select 27.2`(✅ `xcode-select -p` 已指向 Xcode)
+- [x] **P1.3** 下载 iOS 模拟器 runtime:✅ `xcodes runtimes install "iOS 27.2"`(iOS 27.2 / 24B8117 已装)
 - [x] **P1.4** 写 `tools/doctor.sh`(环境自检)→ ✅ 由 C2 完成
-- [x] **P1.5** 写 `tools/bootstrap.sh`(装 xcodes → Xcode 27.0 → iOS runtime)→ ✅ 由 C3 完成
+- [x] **P1.5** 写 `tools/bootstrap.sh`(装 xcodes → Xcode 27.2 → iOS runtime)→ ✅ 由 C3 完成
 - [x] **P1.6** 写 `tools/bundle.sh` 原型:拼 `App.app` + `codesign --force --sign -` + `simctl install/launch` → ✅ macOS 与 iOS 模拟器都验证通过
 - [x] **P1.7** 实测 iOS 模拟器 bundle 的最小必需 Info.plist 键 → ✅ 已跑通(见下)
 
-> 已确认(2026-09-26):`xcodes list` 显示 `27.0 (27A266a) [Apple Silicon]`(与 D12 一致;27.x 无 Intel 构建,印证 D13)。
+> 已确认(2026-09-26):`xcodes list` 显示 `27.0 (27A266a) [Apple Silicon]`(27.x 无 Intel 构建,印证 D13)。
+> 2026-11-22 起本地锁 Xcode 27.2;小版本策略见 D21。
 > ⚠️ 踩坑:`brew install xcodesorg/made/xcodes` 走源码构建(git clone SPM 依赖),在受管沙箱里 getcwd 报 `Operation not permitted`;改直下 release 二进制(`xcodes.zip` → `/opt/homebrew/bin/xcodes`)。
 >
 > ✅ **原生打包已验证(2026-09-26)**:macOS + iOS 模拟器均跑通(iOS app 在 iPhone 17 模拟器 launch 成功、进程稳定)。
@@ -110,7 +111,7 @@
 
 - [x] **D1** `ci.yml`(✅ 已写:pin `macos-26`、选 Xcode 27、Conventional Commits 校验、doctor→sync-version→build→test→run-sim+截图→artifact)
 - [x] **D2** `release.yml`(✅ 已写:tag 触发 → 校验 tag==version.properties → bundle → `gh release create`;2026-10-24 改为 matrix 调 EasyRelease 签名/公证 → zip + sha256 → Release,见 D17)
-- [x] **D3** 开 Actions 验证首跑 → ✅ 成功。**发现**:`macos-26` 默认只有 Xcode 26.6;`xcode-27` 镜像含 27.0/27.1/27.2(+beta)。已改用 `xcode-27` + 优先选 `Xcode_27.0.0.app`(**Build 27A266a,与 Air 完全一致**);doctor/build/test/模拟器冒烟均绿。
+- [x] **D3** 开 Actions 验证首跑 → ✅ 成功。**发现**:`macos-26` 默认只有 Xcode 26.6;`xcode-27` 镜像含 27.0/27.1/27.2(+beta)。已改用 `xcode-27` + 优先选 27 系列稳定版;2026-11-22 起选择逻辑收进 `.github/actions/select-xcode`(默认 27.2,排除 beta),doctor/build/test/模拟器冒烟均绿。
 
 ---
 
@@ -137,6 +138,23 @@
 - [x] **F4** `git grep` 真实 IP / token / 私钥 → ✅ 零命中
 - [x] **F5** 措辞检查 → ✅ research 标「未验证/已核实」,执行期文档用「实测」
 - [x] **F6** `tools/verify-all.sh` 总验收 → ✅ 6/6 通过
+
+---
+
+## Phase G — 工程化收口(对齐 EasyAndroid 的结构化实践)
+
+- [x] **G1** 模板独立:`template/`(最小 SwiftUI + Core 单测 + 断言),`new-app.sh` 改为从模板生成;
+  EnvDemo 不再兼任模板(D18)
+- [x] **G2** 模板冒烟:`tools/test-template.sh`(生成临时应用 → build → test → 清理),进 verify-all 与 CI
+- [x] **G3** 仓库自检:`tools/repo-check.sh`(workflow/action/runs-on/链接/应用必备文件/决策索引/敏感信息),
+  作为 `verify-all.sh` 第一步,CI 直接调用(D19)
+- [x] **G4** 应用交付:`tools/handoff-app.sh`(预检 + 导出「应用 + 工具链」自包含仓库 + manifest/sha256)(D20)
+- [x] **G5** 发版语义对齐:`release.sh` 支持 `--check-commits`,0.x 的 BREAKING 只升 MINOR;CI 复用同一脚本
+- [x] **G6** Xcode 选择集中化:`.github/actions/select-xcode`(默认 27.2,排除 beta),所有 workflow 复用(D21)
+- [x] **G7** 环境快照刷新:AGENTS / PLAN / README / docs/01 / docs/03 / docs/05 统一到 macOS 27.2 + Xcode 27.2
+- [x] **G8** 模拟器设备解析:`simctl_resolve_device`(UDID / 名字 / 自动挑),`run-sim` / `ui-dump` / `ui-assert` / `sim` 统一
+- [x] **G9** 文档:新增 [docs/10](docs/10-app-lifecycle-and-handoff.md)(模板 → 孵化 → 交付),
+  踩坑补到 [docs/08](docs/08-gotchas.md) §18–21
 
 ---
 
@@ -172,6 +190,7 @@
 | 2026-10-24 | EasyRelease `apple-v0.6.0`:`.dmg`/`.zip` 真链路验证通过,公证支持 App 专用密码 | run `40099541736` |
 | 2026-10-24 | App 专用密码认证实测通过;EasyRelease v0.6.3 支持 Installer 身份,新增 `verify-pkg.yml` | run `40101281656` |
 | 2026-10-24 | `.pkg` 真链路验证通过(Developer ID Installer + 公证 + staple) | run `40105139059` |
+| 2026-11-22 | Phase G:模板独立 + 模板冒烟、仓库自检进 verify-all/CI、handoff 交付、发版 0.x 语义、Xcode 选择集中化、设备解析、环境快照刷新 | 对齐 EasyAndroid 的结构化实践(D18–D21) |
 
 ---
 

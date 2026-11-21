@@ -27,7 +27,8 @@
 
 - **症状**:`ls -d /Applications/Xcode_27*.app | sort -V | tail -1` → `Xcode_27.2_beta.app`。
 - **原因**:beta 版本号比稳定版更高。
-- **解法**:**显式优先 `*27.0*`**(`Xcode_27.0.0.app` → Build `27A266a`,与 Air 一致),找不到再退而取最高。
+- **解法**:排除 beta,优先指定版本。现在集中在 `.github/actions/select-xcode`(默认 `27.2`),
+  找不到首选版本再退到同系列最高稳定版;不要在 workflow 里各抄一份。
 
 ## 5. 现代 Xcode 默认不带模拟器 runtime
 
@@ -122,3 +123,38 @@
 - **解法**:caller job 不要低于被调 workflow 所需权限(本次直接移除 job 级 `permissions`,继承顶层
   `contents: write`)。改动后同一 `workflow_dispatch` 正常进入 `prepare`。
 - **教训**:reusable workflow 的 `startup_failure` 优先查 caller/called 的 `permissions` 是否匹配。
+
+## 18. 环境快照漂移:文档写 27.0,机器已经是 27.2
+
+- **症状**:`AGENTS.md` / `README` / `PLAN.md` / `docs/01` 都写 Xcode 27.0 / macOS 27.0.1,
+  但 `tools/doctor.sh` 报 **Xcode 27.2 / macOS 27.2**;CI 仍选 27.0,却宣称「与 Air 完全一致」。
+- **原因**:环境快照只在个别文档里手改,升级 Xcode 时没人被强制更新其余位置。
+- **解法**:
+  1. **`tools/doctor.sh` 是唯一事实来源**;文档里的版本表都标快照日期。
+  2. 升级 Xcode 时一起改:`AGENTS.md` §4、`PLAN.md` §0、`docs/01` §2、CI 的
+     `select-xcode` 默认值(决策 D21)。
+  3. CI 选择逻辑收进 composite action,避免 7 个 workflow 各写一份。
+- **教训**:「与本地完全一致」这种断言必须能被一条命令复核,否则它就是文案。
+
+## 19. `new-app.sh` 从示例应用复制,模板随示例漂移
+
+- **症状**:新建的工程里带着 EnvDemo 的环境探测代码;EnvDemo 一改,模板就变;改名脚本
+  只能靠提示让人手改。
+- **原因**:`apps/EnvDemo` 同时兼任「示例」「自检」「模板」三个角色。
+- **解法**:模板独立到仓库根 `template/`(D18),`new-app.sh` 只从模板复制;生成后 grep
+  `TemplateApp`,有残留直接失败;`tools/test-template.sh` 用真实构建 + 单测守模板。
+- **教训**:一个目录只能有一个角色。模板要最小,示例要真实,自检要稳定。
+
+## 20. 0.x 上出现 `feat!:` 会直接跳到 1.0.0
+
+- **症状**:`release.sh` 推导下一版时,`0.3.0` + BREAKING → `1.0.0`,但项目并没有宣布稳定。
+- **原因**:段位规则照搬了 SemVer 的 MAJOR 语义,没处理 0.x 特例。
+- **解法**:MAJOR 为 0 时 BREAKING 只升 MINOR(与 EasyAndroid 一致);真要到 1.0.0 应显式决定。
+  同时把正文里的 `BREAKING CHANGE:` 也纳入判断,不只看标题的 `!`。
+
+## 21. 决策记录加了 D17,索引还写 D1–D16
+
+- **症状**:`docs/00-decisions.md` 已有 D17,`docs/README.md` 仍写「D1–D16」。
+- **原因**:决策是增量写的,索引是手写的,两者没有机器校验。
+- **解法**:`tools/repo-check.sh` 解析两边的最大编号并比对;不一致直接拦。
+- **教训**:能机器比对的「记账」不要靠人。

@@ -5,7 +5,7 @@ Apple 平台(iOS / iPadOS / macOS,后续扩展全平台)**无 IDE 命令行开�
 对标 [`EasyIndie/EasyAndroid`](https://github.com/EasyIndie/EasyAndroid):同样是
 「踩过的坑 + 验证过的结论 + 可直接复用的脚本」,而不是官方文档搬运。
 
-> **开发机:M1 Air(macOS 27.0 / Apple Silicon)。** 构建、模拟器、验收都在本机完成。
+> **开发机:M1 Air(macOS 27.2 / Apple Silicon / Xcode 27.2)。** 构建、模拟器、验收都在本机完成。
 > **纯原生工具链,不依赖第三方打包工具**(swift-bundler / XcodeGen / idb 均不用)。
 > **arm64-only**,Intel Mac 不纳入支持(见 [`docs/00-decisions.md`](docs/00-decisions.md) D13)。
 
@@ -14,14 +14,27 @@ Apple 平台(iOS / iPadOS / macOS,后续扩展全平台)**无 IDE 命令行开�
 > 调研依据见
 > [`docs/research/03-simulator-cross-platform.md`](docs/research/03-simulator-cross-platform.md)。
 
+## 快速开始
+
+```bash
+tools/doctor.sh                 # 环境体检
+tools/verify-all.sh             # 仓库自检 → 构建 → 单测 → 模拟器 → OCR 断言
+tools/new-app.sh MyApp          # 从 template/ 新建应用
+tools/run-sim.sh --screenshot /tmp/a.png   # 自动挑模拟器并截图
+tools/handoff-app.sh MyApp --to ../MyApp --write   # 交付成自包含仓库
+```
+
 ## 目录
 
 | 路径 | 内容 |
 |---|---|
 | [`PLAN.md`](PLAN.md) | **执行计划(主交付物)** —— 分阶段、可勾选 |
 | [`AGENTS.md`](AGENTS.md) | 给 AI 编码智能体的仓库说明与硬性约束 |
+| [`template/`](template/) | 新应用脚手架(`tools/new-app.sh` 的复制源,不参与发版) |
+| [`apps/`](apps/) | SwiftPM 应用孵化区(`EnvDemo` 为示例 + 自检应用) |
 | [`.agents/skills/`](.agents/skills/) | 多个 Apple 项目共享的 Codex 技能集合 |
 | [`docs/09-agent-skills.md`](docs/09-agent-skills.md) | 技能来源、自动更新与设备安装 |
+| [`docs/10-app-lifecycle-and-handoff.md`](docs/10-app-lifecycle-and-handoff.md) | 模板 → 孵化 → 交付(`handoff-app.sh`) |
 | [`docs/`](docs/) | 知识沉淀:决策记录、执行期文档、调研 |
 | [`docs/00-decisions.md`](docs/00-decisions.md) | 决策记录(决策 / 理由 / 状态 / 怎么改) |
 | [`docs/research/`](docs/research/) | 规划期调研:Apple 规则 / 跨平台能力 / 模拟器跨平台 / SwiftPM 打包 |
@@ -36,10 +49,12 @@ Apple 平台(iOS / iPadOS / macOS,后续扩展全平台)**无 IDE 命令行开�
 |---|---|---|
 | 构建机 | Windows / WSL2 / Linux 都能构建 | **只有 macOS 能构建**(arm64) |
 | SDK 获取 | 单独装 `cmdline-tools`,不装 IDE | **必须装完整 Xcode**(可以从不打开 GUI) |
-| 设备/运行 | `adb` + 真机 | `simctl` + 模拟器(真机需证书,暂缓) |
-| 工程生成 | Gradle(工程自带 wrapper) | **SwiftPM**(不生成、不维护 `.xcodeproj`) |
+| 设备/运行 | `adb` + 真机 | `simctl` + 模拟器(真机需证书,暂缓);自动选设备 |
+| 工程生成 | Gradle(工程自带 wrapper) | **SwiftPM**(不生成、不维护 `.xcodeproj`)+ `template/` |
+| 应用交付 | `handoff-app.sh` → 业务仓库 | `handoff-app.sh` → 自包含小仓库(应用 + 工具链) |
 | 打包 | AGP → APK | **自写原生打包脚本**(`codesign` + `plutil` + `simctl`) |
-| 发版 | `tools/release.sh` 一条命令 | 复用同一套 Conventional Commits → SemVer |
+| 发版 | `tools/release.sh` 一条命令 | 复用同一套 Conventional Commits → SemVer(0.x 保护) |
+| 仓库自检 | `verify-all.sh` 的仓库自检段 | `tools/repo-check.sh`(verify-all 第一步 + CI) |
 | 版本唯一来源 | `version.properties` | 同样用 `version.properties` |
 
 ## 已确认的调研结论(摘要)

@@ -92,11 +92,14 @@ xcrun swift build -c release --triple arm64-apple-ios-simulator \
 tools/new-app.sh MyApp
 ```
 
-做三件事:复制 `apps/EnvDemo` → `apps/MyApp`;把文件内容里的 `EnvDemo` 全换成 `MyApp`;
-把路径里含 `EnvDemo` 的文件/目录改名(`Sources/EnvDemoCore/` → `Sources/MyAppCore/` 等),并删掉 `.build`。
+做三件事:复制仓库根 `template/` → `apps/MyApp`;把文件内容里的 `TemplateApp` 全换成 `MyApp`;
+把路径里含 `TemplateApp` 的文件/目录改名(`Sources/TemplateAppCore/` → `Sources/MyAppCore/` 等),并删掉 `.build`。
 
-> ⚠️ 它是**克隆 EnvDemo、不是空白模板**:新工程里仍是环境探测代码,得自己重写 `Sources/`。
-> 机械替换也不懂语义,改完 grep 一下:`grep -rn EnvDemo apps/MyApp`。
+> **模板已与示例分离(D18)。** `template/` 是一个最小可构建骨架(一屏 Hello + 一个纯逻辑单测),
+> 不再从 `apps/EnvDemo` 克隆,所以不会把环境探测代码带进新工程。模板本身的约定与冒烟见
+> [10](10-app-lifecycle-and-handoff.md)。
+>
+> 机械替换不懂语义:脚本生成后会自己 grep 一次 `TemplateApp`,有残留直接失败。
 
 ### 然后
 
@@ -125,5 +128,5 @@ tools/verify-all.sh MyApp             # 端到端验收
 `new-app.sh` 只做字符串替换,不会动 `version.properties`(共享)、也不改 CI;生成后建议:
 
 ```bash
-grep -rn EnvDemo apps/MyApp && echo "⚠️ 有残留" || echo "✅ 干净"
+grep -rn TemplateApp apps/MyApp && echo "⚠️ 有残留" || echo "✅ 干净"
 ```

@@ -40,6 +40,13 @@
 9. **不提交签名凭据。** `*.p12` / `*.mobileprovision` 已在 `.gitignore`。
 10. **不提交 `.xcodeproj`。** 本仓库用 SwiftPM + 原生打包脚本,不生成 Xcode 工程。
 11. **升级 Xcode / Swift 要单独开一次,别夹在功能开发里。** 先升级、先在 Air 与 CI 上验过、再合。
+    具体小版本跟随策略见 D21:27 系列内用最新稳定版(排除 beta),本地与 CI 同版本。
+12. **新应用只能从仓库根 `template/` 生成,不要拿 `apps/EnvDemo` 当模板。**
+    `tools/new-app.sh` 已改为复制 `template/`;EnvDemo 只是示例 + 自检应用。
+    改过 `template/` 必须跑 `tools/test-template.sh`(真实构建 + 单测)。
+13. **改 workflow / 文档 / 决策后跑 `tools/repo-check.sh`。** 它守:workflow 的
+    `runs-on` 不写 `-latest`、action 主版本不倒退、EasyRelease pin 到具体 tag、
+    文档相对链接、应用必备文件、决策索引、敏感信息。`verify-all.sh` 与 CI 都会跑。
 
 ---
 
@@ -50,8 +57,9 @@ PLAN.md              执行计划(活文档)
 docs/research/       规划期调研(带「怎么复核」)
 docs/00-decisions.md 决策记录(决策/理由/状态/怎么改)
 docs/NN-*.md         执行期文档(实测后写,执行阶段创建)
-apps/                可运行的 SwiftPM 工程
-tools/               构建/模拟器/验收脚本
+apps/                可运行的 SwiftPM 工程(孵化区)
+template/            新应用脚手架(new-app.sh 的复制源,不参与发版)
+tools/               构建/模拟器/验收/交付脚本
 version.properties   版本号唯一来源
 .agents/skills/       Apple 开发项目共享的 Codex 技能
 ```
@@ -96,14 +104,14 @@ Apple 项目共享技能维护在 [`.agents/skills/`](.agents/skills/)；首次�
 
 | 组件 | 版本/状态 | 复核命令 |
 |---|---|---|
-| macOS | 27.0.1(build `26A434`,2026-10-22 核验) | `sw_vers` |
+| macOS | 27.2(build `26B123`,2026-11-22 核验) | `sw_vers` |
 | 芯片 | Apple Silicon M1(arm64) | `uname -m` |
-| Xcode | 27.0(build `27A266a`),已选为 active developer directory | `xcodebuild -version` / `xcode-select -p` |
-| Swift | 6.4(随 Xcode 27) | `swift --version` |
+| Xcode | 27.2(build `27B52`),已选为 active developer directory | `xcodebuild -version` / `xcode-select -p` |
+| Swift | 6.4.2(随 Xcode 27) | `swift --version` |
 | Homebrew | ✅ 已装(最近核验) | `brew --version` |
 | Command Line Tools | 已装;当前 active developer directory 是完整 Xcode | `xcode-select -p` |
-| iOS 模拟器 runtime | iOS 27.0 已装(2026-10-22 核验) | `xcrun simctl list runtimes` |
-| xcodes | 可选装机工具;当前未安装,已安装的 Xcode/runtime 不受影响 | `command -v xcodes` |
+| iOS 模拟器 runtime | iOS 27.2 已装(2026-11-22 核验) | `xcrun simctl list runtimes` |
+| xcodes | 可选装机工具;已装 2.1.0,只用于装机 | `command -v xcodes` |
 | 打包 | 自写原生脚本(`tools/bundle.sh`) | — |
 
 ---

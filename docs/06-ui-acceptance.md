@@ -15,7 +15,9 @@
 
 ```bash
 tools/run-sim.sh --screenshot /tmp/envdemo.png   # 一条命令:打包→装→启动→截图
-tools/ui-dump.sh --out /tmp/envdemo.png          # 只截图
+tools/ui-dump.sh --out /tmp/envdemo.png          # 只截图(自动挑已启动设备)
+tools/ui-dump.sh --udid <UDID> --out /tmp/a.png  # 指定设备(同名多 runtime 时最稳)
+tools/ui-assert.sh --app EnvDemo --udid <UDID>   # 断言也可指定设备
 ```
 
 实测:iPhone 17 截图分辨率 **1206×2622 px**(对应 393×852 pt)。

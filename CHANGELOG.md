@@ -9,6 +9,16 @@
 
 ### Added
 
+- **工程化收口(对齐 EasyAndroid 的结构化实践)**
+  - `template/`:模板从 `apps/EnvDemo` 独立,`new-app.sh` 改为从模板生成(D18);
+    `tools/test-template.sh` 做模板冒烟(临时生成 → build → test → 清理)。
+  - `tools/repo-check.sh`:仓库自检,守 workflow 的 `-latest` / action 主版本 /
+    EasyRelease pin、文档相对链接、应用必备文件、决策索引、敏感信息(D19);
+    作为 `verify-all.sh` 第一步,CI 也直接调用。
+  - `tools/handoff-app.sh`:交付应用为「应用 + 工具链」的自包含仓库,
+    附 `handoff-manifest.txt`(commit / 版本 / sha256)(D20);新增 [docs/10](docs/10-app-lifecycle-and-handoff.md)。
+  - `.github/actions/select-xcode`:Xcode 选择集中化(默认 27.2,排除 beta),
+    替换 7 个 workflow 里各自复制的一份(D21)。
 - **`.pkg` 签名 + 公证验证通过**:EasyRelease `v0.6.4` 修复 `productsign` 无头卡住;
   EasyApple run `40105139059`,submission `aa154aa3-...`,Installer 身份签名,
   `spctl -t install` 通过。
@@ -33,6 +43,12 @@
 
 ### Changed
 
+- `run-sim` / `ui-dump` / `ui-assert` / `sim`:模拟器设备解析统一走 `simctl_resolve_device`,
+  支持 `--udid`;自动挑设备(已启动 iPhone > iPhone 17 > 最新 runtime),不再按名字取列表第一个。
+- `release.sh`:新增 `--check-commits`;0.x 阶段 BREAKING 只升 MINOR(与 EasyAndroid 一致),
+  正文里的 `BREAKING CHANGE:` 也纳入判断。CI 改为调用同一脚本。
+- 环境快照刷新:macOS 27.2 / Xcode 27.2 / Swift 6.4.2 / iOS 27.2(AGENTS、PLAN、README、docs/01、03、05)。
+- `release.yml` 的 `prepare` 与 `update-agent-skills.yml` 显式 pin `ubuntu-24.04`。
 - `release.yml`:从 ad-hoc 打包改为 EasyRelease 签名/公证发布;不再附带
   `open-unsigned-app.sh`，下载解压后双击即可。
 - `verify-all` 的截图/断言步骤隐式获得确定性环境（无需改调用）。
@@ -42,6 +58,11 @@
 
 ### Fixed
 
+- **文档环境快照过期**:文档仍写 Xcode 27.0 / macOS 27.0.1,实机已是 27.2;
+  CI 仍选 27.0 却声称「与 Air 一致」。现统一到 27.2,选择逻辑收进 composite action。
+- **`docs/README` 决策索引漂移**:仍写 D1–D16,实际已有 D17;`repo-check` 现在会拦。
+- **`new-app.sh` 模板漂移**:不再复制 `apps/EnvDemo`,改从 `template/` 生成。
+- **`release.sh` 0.x 语义**:`feat!:` 不再把 0.x 直接推到 1.0.0。
 - **Agent 技能描述超出规范上限**：Xcode 导出的 `app-intents-specialist` / `app-intents-whats-new-27` 描述超过 Agent Skills 规范的 1024 字符上限，导致 pi / Claude 报「技能冲突」并拒绝加载。新增 `tools/apple-skill-descriptions.json`（短描述覆盖表）与 `tools/apply-skill-description-overrides.py`，由 `tools/install-agent-skills.sh` 在每次导出后自动应用，`tools/doctor.sh` 复用同一校验。详见 [docs/09](docs/09-agent-skills.md)。
 - CI artifact 从未真正上传:`upload-artifact@v4` 默认 `include-hidden-files: false`,
   而截图在 `.tmp/`、xcresult 在 `.build/`(都是隐藏目录)。两条上传步骤已显式打开该开关,

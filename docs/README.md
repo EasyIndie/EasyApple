@@ -1,6 +1,6 @@
 # 知识库索引
 
-> 当前处于**执行期**:决策已定稿,执行期文档(`01`…`09`)已随实测创建。
+> 当前处于**执行期**:决策已定稿,执行期文档(`01`…`10`)已随实测创建。
 > 规划期调研(`research/`)保留为「来源/依据」,与执行期文档分工不同。
 
 ## 执行期文档(实测后结论与用法)
@@ -16,7 +16,8 @@
 | [07-cross-platform-and-no-mac.md](07-cross-platform-and-no-mac.md) | 跨平台 / 无 Mac 全景(首期不采用) |
 | [08-gotchas.md](08-gotchas.md) | **踩坑速查** |
 | [09-agent-skills.md](09-agent-skills.md) | Apple 开发技能共享、安装与自动更新 |
-| [00-decisions.md](00-decisions.md) | 决策记录(D1–D16,已定稿) |
+| [10-app-lifecycle-and-handoff.md](10-app-lifecycle-and-handoff.md) | **模板 → 孵化 → 交付**:`template/`、`new-app.sh`、`handoff-app.sh` |
+| [00-decisions.md](00-decisions.md) | 决策记录(D1–D21,已定稿) |
 
 ## 规划期调研(`research/`,来源/依据,部分已在 Air 核实)
 

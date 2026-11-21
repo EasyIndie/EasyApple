@@ -16,12 +16,16 @@
 | **D9** | **CI runner = `macos-26` 显式 pin,不用 `-latest`。** | 换 OS = 换构建环境,不该无声发生;`macos-26` 已核实为 arm64,与 Air 对齐。 | `accepted` | 升 runner 单独开一次。 |
 | **D10** | ~~`swift-bundler` pin 到具体 commit~~ | ~~当时计划用 swift-bundler~~ | `superseded by D5` | **已不用 swift-bundler**。 |
 | **D11** | **远程仓库 = `EasyIndie/EasyApple`,origin 用 HTTPS。** | 与 EasyAndroid 同组织、同协议。已落地:2026-09-26 首次 push。 | `accepted` | 要换 SSH/组织/协议时改 `git remote set-url`。 |
-| **D12** | **目标工具链 = Xcode 27.0(最新)。** | macOS 27.0 已满足 Xcode 27 的 ≥26.6 要求;锁最新、带 Swift 6.4 + iOS 27 SDK。 | `accepted` | 降级路径:Xcode 26.6(macOS 26.2+)。 |
+| **D12** | **目标工具链 = Xcode 27(系列)。** | macOS 27 已满足 Xcode 27 的 ≥26.6 要求;锁最新大版本、带 Swift 6.4 + iOS 27 SDK。具体小版本跟随策略见 D21。 | `superseded by D21` | 降级路径:Xcode 26.6(macOS 26.2+);小版本策略见 D21。 |
 | **D13** | **arm64-only,Intel Mac 不纳入构建与分发。** | Xcode 27 / macOS 27 已无 Intel 构建;手里唯一 Intel(2015 MBP)永久出局。 | `accepted` | 要支持 Intel 须退回 Xcode 26.6 + universal 构建 + 降 target,见 PLAN 附录 A。 |
 | **D14** | **`xcodes` 仅用于 bootstrap 装机(装 Xcode + 模拟器 runtime),不进入构建/打包链路。** | 装机也要命令行化、可锁版本/架构;xcodes 是 Apple 下载页的自动化客户端,不改变 Xcode 本体。属于「装机」而非「构建/打包」,不违反 D5。 | `accepted` | 若要零第三方二进制,退路是官网直下 `.xip` + `xip --expand`。 |
 | **D15** | **文本级验收用原生 OCR(Apple Vision),不用 idb / 宿主 AX API / XCUITest。** | 实测:宿主 AX 路线要 `AXIsProcessTrusted` 为真 + Simulator.app GUI(`simctl boot` 无头启动时 `simulator app count: 0`,根本没宿主进程);XCUITest 需 `.xcodeproj`(与 D4/D5 冲突);idb 是第三方。Vision OCR 完全原生、免授权、无头 + CI 可跑(热跑 <1s)。代价:**有损识别**,断言用稳定串。 | `accepted` | 要**精确**无障碍树 / 交互断言时,只剩两条路:一次性生成(不入库)`.xcodeproj` 跑 XCUITest,或引入 idb —— 都需新决策。见 [docs/06](06-ui-acceptance.md)。 |
 | **D16** | **签名/公证等发布能力外置为独立仓库 `EasyIndie/EasyRelease`,EasyApple 不内置发布基础设施。** | 多项目复用需要独立版本与供应链边界;放进实践库会与产品版本、评审互相牵连。EasyRelease 以 composite action + reusable workflow 提供,坚持只用原生工具(受 D5 约束);EasyApple 作为首个消费方,已用组织共享凭据验证 Developer ID + 公证链路。 | `accepted` | 需要跨仓库一键发布 / 排队 / 审计时,再评估 GitHub App(只做控制面),另行决策。 |
 | **D17** | **正式发布改用 EasyRelease:tag 触发 → matrix 构建 → Developer ID 签名 + 公证 + staple → zip + sha256 → GitHub Release。** | 组织共享凭据已验证;发布物应双击可开,不再附带绕过 Gatekeeper 的脚本。签名实现只在 EasyRelease 维护,`release.yml` 只做编排与发布。 | `accepted` | 需要 App Store / TestFlight 时另开链路;回退可恢复旧 ad-hoc release(历史 tag 不受影响)。 |
+| **D18** | **模板独立为仓库根 `template/`,EnvDemo 不再兼任模板。** | EnvDemo 兼职模板时,`new-app.sh` 复制的是「带环境探测代码的示例」,模板会随示例漂移;EasyAndroid 的 `template/` + `self-test/` 分离已验证更稳。 | `accepted` | 改模板后跑 `tools/test-template.sh`;模板不得放业务代码。 |
+| **D19** | **仓库自检机器化:`tools/repo-check.sh` 作为 `verify-all.sh` 第一步,CI 也调用。** | 文档链接、workflow 的 `-latest`/action 主版本、决策索引、敏感信息这些「人眼容易漏」的规则,必须由机器守。对应 EasyAndroid 的 `verify-all` 仓库自检段。 | `accepted` | 新增检查项改脚本;CI 与本地用同一份判据。 |
+| **D20** | **应用交付 = `tools/handoff-app.sh` 导出「应用 + 工具链」的自包含仓库,附 `handoff-manifest.txt`(commit / 版本 / sha256)。** | 工具按 `REPO_ROOT/apps/<App>` 找应用,只导出源码会让对方拿到构建不了的壳。对应 EasyAndroid 的 `handoff-app.sh`。 | `accepted` | 交付物不继承 CI / EasyRelease / docs;需要时显式复制。 |
+| **D21** | **Xcode 27 系列内跟随最新稳定版(当前 27.2),本地与 CI 同版本;选择逻辑集中在 `.github/actions/select-xcode`。** | 本地已升到 27.2,文档/CI 仍写 27.0 造成「与 Air 一致」假象;各 workflow 各抄一份选版本逻辑必然漂移。排除 beta,找不到首选版本时退到同系列最高稳定版。 | `accepted` | 升 Xcode 仍单独开一次(规则 11);改版本只改 composite action 的默认值和各 workflow 的 `version:` 输入。 |
 
 ## 变更记录
 
@@ -37,3 +41,4 @@
 | 2026-10-24 | 新增 D17:正式 `release.yml` 切换 EasyRelease,产出签名/公证 zip;dry-run run `40099918160` 通过 |
 | 2026-10-24 | EasyRelease v0.6.0:`.dmg`/`.zip` 真链路验证通过;公证支持 API Key 与 App 专用密码(run `40099541736`) |
 | 2026-10-24 | App 专用密码实证通过(run `40101281656`);v0.6.3 支持 Developer ID Installer;`.pkg` 实证通过(run `40105139059`) |
+| 2026-11-22 | 新增 D18–D21:模板独立、仓库自检、handoff 交付、Xcode 27 系列跟随策略;D12 由 D21 取代 |
