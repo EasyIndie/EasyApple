@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # tools/verify-all.sh — 总验收:遍历 apps/ 下所有应用
-#   doctor → sync-version → 每个应用:[build → test → run-sim → ui-dump → ui-assert]
+#   repo-check → doctor → sync-version → template → 每个应用:
+#   [build → test → run-sim → ui-dump → ui-assert]
 #
 # 用法:
 #   tools/verify-all.sh              # 全部应用
@@ -15,8 +16,10 @@ step() {
   if "$@"; then ok "$name"; PASS=$((PASS+1)); else printf '\033[1;31m[FAIL]\033[0m %s\n' "$name" >&2; FAIL=$((FAIL+1)); fi
 }
 
+step "repo-check"   bash "$REPO_ROOT/tools/repo-check.sh"
 step "doctor"       bash "$REPO_ROOT/tools/doctor.sh"
 step "sync-version" bash "$REPO_ROOT/tools/sync-version.sh" --check
+step "template"     bash "$REPO_ROOT/tools/test-template.sh"
 
 apps="$(resolve_apps "$@")"
 [ -n "$apps" ] || die "apps/ 下没有任何应用(先用 tools/new-app.sh <Name> 生成)"

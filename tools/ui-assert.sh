@@ -10,13 +10,14 @@
 #   tools/ui-assert.sh --app EnvDemo                         # 读 apps/EnvDemo/ui-assertions.txt
 #   tools/ui-assert.sh --input /tmp/a.png --contains "..."   # 复用已有截图
 #   tools/ui-assert.sh --device "iPhone 17" --contains "..."
+#   tools/ui-assert.sh --udid <UDID> --contains "..."
 #   tools/ui-assert.sh --appearance dark --contains "..."    # 深色模式断言
 #   tools/ui-assert.sh --no-fix-status --contains "..."      # 不固定状态栏(默认固定)
 # 退出码:0 全部通过;1 有断言失败
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
-DEVICE="${SIM_DEVICE:-iPhone 17}"
+DEVICE_QUERY="${SIM_DEVICE:-}"
 INPUT=""
 APP=""
 FIX_STATUS=1
@@ -27,7 +28,8 @@ NOT_CONTAINS=()
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --device) DEVICE="$2"; shift 2 ;;
+    --device) DEVICE_QUERY="$2"; shift 2 ;;
+    --udid) DEVICE_QUERY="$2"; shift 2 ;;
     --input) INPUT="$2"; shift 2 ;;
     --app) APP="$2"; shift 2 ;;
     --appearance) APPEARANCE="$2"; shift 2 ;;
@@ -62,7 +64,7 @@ if [ "$(( ${#CONTAINS[@]} + ${#NOT_CONTAINS[@]} ))" -eq 0 ]; then
 fi
 
 if [ -z "$INPUT" ]; then
-  UDID="$(simctl_udid "$DEVICE")"
+  UDID="$(simctl_resolve_device "$DEVICE_QUERY")"
   mkdir -p "$REPO_ROOT/.tmp"
   INPUT="$REPO_ROOT/.tmp/ui-assert-$(date +%Y%m%d-%H%M%S).png"
   trap ui_env_restore EXIT

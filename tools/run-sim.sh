@@ -2,22 +2,24 @@
 # tools/run-sim.sh — 打包并在 iOS 模拟器上运行(一条命令闭环)
 #
 # 用法:
-#   tools/run-sim.sh                          # 默认设备 iPhone 17 + 默认应用
+#   tools/run-sim.sh                          # 自动挑设备(已启动 iPhone > iPhone 17 > 最新)
 #   tools/run-sim.sh --app MyApp              # 指定应用(apps/ 下多个应用时必填)
-#   tools/run-sim.sh --device "iPhone 18 Pro"
+#   tools/run-sim.sh --device "iPhone 18 Pro" # 按名字(子串)选
+#   tools/run-sim.sh --udid <UDID>            # 按 UDID 选(同名设备多 runtime 时最稳)
 #   tools/run-sim.sh --no-bundle              # 复用已有 .app
 #   tools/run-sim.sh --screenshot /tmp/a.png  # 启动后截图
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
 APP_NAME=""
-DEVICE_NAME="${SIM_DEVICE:-iPhone 17}"
+DEVICE_QUERY="${SIM_DEVICE:-}"
 DO_BUNDLE=1
 SHOT=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --device) DEVICE_NAME="$2"; shift 2 ;;
+    --device) DEVICE_QUERY="$2"; shift 2 ;;
+    --udid) DEVICE_QUERY="$2"; shift 2 ;;
     --app) APP_NAME="$2"; shift 2 ;;
     --no-bundle) DO_BUNDLE=0; shift ;;
     --screenshot) SHOT="$2"; shift 2 ;;
@@ -35,10 +37,8 @@ if [ "$DO_BUNDLE" = 1 ]; then
 fi
 [ -d "$BUNDLE" ] || die "找不到 .app: $BUNDLE(先跑 tools/bundle.sh --platform iOSSimulator)"
 
-UDID="$(xcrun simctl list devices available | grep -F "$DEVICE_NAME (" | head -1 \
-  | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)"
-[ -n "$UDID" ] || die "找不到模拟器设备: $DEVICE_NAME(用 tools/sim.sh list 查看)"
-note "设备: $DEVICE_NAME ($UDID)"
+UDID="$(simctl_resolve_device "$DEVICE_QUERY")"
+note "设备: $UDID"
 
 if ! xcrun simctl list devices | grep -F "$UDID" | grep -q "(Booted)"; then
   note "启动模拟器…"
@@ -57,4 +57,4 @@ if [ -n "$SHOT" ]; then
   xcrun simctl io "$UDID" screenshot "$SHOT" >/dev/null
   ok "截图: $SHOT"
 fi
-ok "已在 $DEVICE_NAME 上启动 $APP_NAME"
+ok "已在 $UDID 上启动 $APP_NAME"

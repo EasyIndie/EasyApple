@@ -5,15 +5,16 @@
 # 截完自动恢复 —— 截图与 OCR 断言因此可复现(见 docs/06 §2.1)。
 #
 # 用法:
-#   tools/ui-dump.sh                                  # 默认设备截图
+#   tools/ui-dump.sh                                  # 自动挑设备(已启动 > iPhone 17 > 最新)
 #   tools/ui-dump.sh --device "iPhone 17" --out /tmp/a.png
+#   tools/ui-dump.sh --udid <UDID> --out /tmp/a.png
 #   tools/ui-dump.sh --appearance dark                # 深色模式截图
 #   tools/ui-dump.sh --content-size accessibility-large   # 大字号截图
 #   tools/ui-dump.sh --no-fix-status                  # 不动状态栏(保留当前状态)
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
-DEVICE="${SIM_DEVICE:-iPhone 17}"
+DEVICE_QUERY="${SIM_DEVICE:-}"
 OUT=""
 FIX_STATUS=1
 APPEARANCE=""
@@ -21,7 +22,8 @@ CONTENT_SIZE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --device) DEVICE="$2"; shift 2 ;;
+    --device) DEVICE_QUERY="$2"; shift 2 ;;
+    --udid) DEVICE_QUERY="$2"; shift 2 ;;
     --out) OUT="$2"; shift 2 ;;
     --appearance) APPEARANCE="$2"; shift 2 ;;
     --content-size) CONTENT_SIZE="$2"; shift 2 ;;
@@ -35,7 +37,7 @@ case "$APPEARANCE" in ''|light|dark) ;; *) die "--appearance 只支持 light / d
 OUT="${OUT:-$REPO_ROOT/.tmp/ui-$(date +%Y%m%d-%H%M%S).png}"
 mkdir -p "$(dirname "$OUT")"
 
-UDID="$(simctl_udid "$DEVICE")"
+UDID="$(simctl_resolve_device "$DEVICE_QUERY")"
 
 trap ui_env_restore EXIT
 ui_env_lock "$UDID" "$FIX_STATUS" "$APPEARANCE" "$CONTENT_SIZE"

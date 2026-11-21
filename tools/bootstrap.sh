@@ -3,6 +3,8 @@
 set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/_common.sh"
 
+XCODE_VERSION="${EASYAPPLE_XCODE_VERSION:-27.2}"
+IOS_RUNTIME="${EASYAPPLE_IOS_RUNTIME:-27.2}"
 XCODES_VERSION="2.1.0"
 XCODES_URL="https://github.com/XcodesOrg/xcodes/releases/download/${XCODES_VERSION}/xcodes.zip"
 
@@ -26,19 +28,19 @@ if xcrun xcodebuild -version 2>/dev/null | grep -q 'Xcode 27'; then
   ok "Xcode 27 已就绪"
 else
   warn "Xcode 27 未就绪。请手动执行(需 Apple ID + 2FA + sudo):"
-  cat <<'EOS'
-      xcodes install 27.0
+  cat <<EOS
+      xcodes install $XCODE_VERSION
       sudo xcodebuild -license accept
-      xcodes select 27.0
+      xcodes select $XCODE_VERSION
 EOS
 fi
 
 # 3) iOS 模拟器 runtime(可能需登录 + sudo)
-if xcrun simctl list runtimes 2>/dev/null | grep -q '^iOS 27'; then
+if xcrun simctl list runtimes 2>/dev/null | grep -q "^iOS ${IOS_RUNTIME%%.*}"; then
   ok "iOS 27 runtime 已就绪"
 else
   warn "iOS 27 runtime 未就绪。请手动执行:"
-  echo "      xcodes runtimes install \"iOS 27.0\""
+  echo "      xcodes runtimes install \"iOS $IOS_RUNTIME\""
 fi
 
 # 4) 自检

@@ -40,14 +40,70 @@ bundle_version_from_props() {
   printf '%d' "$(( major*10000 + minor*100 + patch ))"
 }
 
-# 按设备名解析 UDID(取第一个匹配的 available 设备)
-simctl_udid() {
-  local name="$1" udid
-  udid="$(xcrun simctl list devices available | grep -F "$name (" | head -1 \
-    | grep -oE '[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}' | head -1)"
-  [ -n "$udid" ] || die "找不到模拟器设备: $name(用 tools/sim.sh list 查看)"
+# 解析模拟器设备:支持 UDID / 精确名字 / 名字子串;空参数 = 自动挑一台。
+#
+# 自动挑的优先级:已启动的 iPhone > 名字叫 iPhone 17 的 > 最新 runtime 的 iPhone。
+# 同名设备在多个 runtime 各有一份时,优先已启动的,其次较新 runtime ——
+# 不再「取列表里第一个」(那个顺序不保证,且会把 iOS 26 的设备选进来,见 docs/08)。
+# 只向 stdout 输出 UDID;选择结果走 stderr。
+simctl_resolve_device() {
+  local query="${1:-}"
+  local udid
+  udid="$(xcrun simctl list devices available --json 2>/dev/null | python3 -c '
+import json, re, sys
+
+q = sys.argv[1].strip()
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(1)
+
+items = []
+for runtime, devs in (data.get("devices") or {}).items():
+    m = re.search(r"iOS-(\d+)-(\d+)", runtime)
+    ver = (int(m.group(1)), int(m.group(2))) if m else (0, 0)
+    for d in devs:
+        if not d.get("isAvailable", True):
+            continue
+        items.append((ver, d))
+
+if not items:
+    sys.exit(2)
+
+if q:
+    cands = [it for it in items
+             if it[1].get("udid") == q or it[1].get("name") == q or q in it[1].get("name", "")]
+    if not cands:
+        sys.exit(3)
+    def score(it):
+        ver, d = it
+        return (d.get("udid") == q or d.get("name") == q,
+                d.get("state") == "Booted", ver)
+else:
+    iphones = [it for it in items if it[1].get("name", "").startswith("iPhone")]
+    cands = iphones or items
+    def score(it):
+        ver, d = it
+        return (d.get("state") == "Booted",
+                d.get("name") == "iPhone 17", ver)
+
+ver, d = max(cands, key=score)
+print(d["udid"])
+print("设备: %s (iOS %d.%d, %s)" % (d["name"], ver[0], ver[1], d.get("state", "?")),
+      file=sys.stderr)
+' "$query")" || {
+    case $? in
+      2) die "没有任何可用模拟器(先 xcrun simctl create 一台)" ;;
+      3) die "找不到模拟器设备: $query(用 tools/sim.sh list 查看)" ;;
+      *) die "解析模拟器列表失败(xcrun simctl list devices available --json)" ;;
+    esac
+  }
+  [ -n "$udid" ] || die "解析模拟器设备失败: ${query:-自动选择}"
   printf '%s' "$udid"
 }
+
+# 兼容旧调用点(ui-dump / ui-assert)
+simctl_udid() { simctl_resolve_device "${1:-}"; }
 
 # 编译并缓存原生 OCR 工具 tools/uiscan.swift(源码更新时自动重编)。
 # 只向 stdout 输出二进制路径;日志走 stderr(以便在 $(...) 里安全使用)。

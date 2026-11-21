@@ -5,30 +5,37 @@
 
 | 脚本 | 用途 |
 |---|---|
-| `_common.sh` | 基座:`REPO_ROOT` / `DEVELOPER_DIR` / 日志函数 / 版本读取(被 source) |
+| `_common.sh` | 基座:`REPO_ROOT` / `DEVELOPER_DIR` / 日志函数 / 版本读取 / 模拟器设备解析(被 source) |
+| `repo-check.sh` | **仓库自检**(不需要 Xcode):workflow/action/runs-on、文档链接、应用必备文件、决策索引、敏感信息 |
 | `doctor.sh` | 环境自检(**第一条要跑的命令**) |
 | `bootstrap.sh` | 一次性装机引导(xcodes → Xcode 27 → iOS runtime;sudo/登录需人工) |
 | `build.sh` | `swift build`(macOS,先校验版本;无参 = 遍历所有应用) |
 | `test.sh` | `swift test`(宿主机 macOS,无参 = 遍历所有应用) |
 | `test-ios.sh` | **iOS 运行时单测**:`xcodebuild test -scheme <包名>-Package`(SwiftPM 包,无需 `.xcodeproj`) |
 | `bundle.sh` | **原生打包**:拼 `.app`(macOS / iOSSimulator)+ ad-hoc 签名 |
-| `run-sim.sh` | 打包并在 iOS 模拟器运行(boot→install→launch,可选截图) |
-| `sim.sh` | `simctl` 常用操作封装 |
+| `run-sim.sh` | 打包并在 iOS 模拟器运行(boot→install→launch,可选截图;自动挑设备 / `--udid`) |
+| `sim.sh` | `simctl` 常用操作封装(含 `udid` 解析) |
 | `ui-dump.sh` | 截图验收(截图为先,D7);自动固定状态栏/外观/字号,截完恢复 |
 | `ui-scan.sh` | **文本级验收**:截图 → 原生 OCR(Apple Vision)→ 文本/JSON(截图带确定性固定) |
 | `ui-assert.sh` | **文本级断言**(可进 CI):`--contains` / `--not-contains` / `--app <Name>`(读 `apps/<Name>/ui-assertions.txt`) |
 | `uiscan.swift` | `ui-scan` 用的原生 OCR 引擎(被 `_common.sh` 编译缓存,不单独跑) |
-| `new-app.sh` | 以 EnvDemo 为模板生成 `apps/<Name>/`(克隆式,生成后自己重写 Sources) |
+| `new-app.sh` | 从仓库根 `template/` 生成 `apps/<Name>/`(支持 `--dest`,生成后自检残留) |
+| `test-template.sh` | **模板冒烟**:临时生成 → build → test → 删除(改 `template/` 后必跑) |
+| `handoff-app.sh` | **交付**:预检 + 导出「应用 + 工具链」自包含仓库 + manifest/sha256(见 docs/10) |
 | `sync-version.sh` | 版本唯一来源(D8)输出 / 校验 |
-| `verify-all.sh` | 总验收:遍历 `apps/` 下所有应用(doctor → sync-version → 每应用 build → test → run-sim → ui-dump → ui-assert) |
+| `verify-all.sh` | 总验收:repo-check → doctor → sync-version → template → 每应用 build → test → run-sim → ui-dump → ui-assert |
 | `release.sh` | Conventional Commits → SemVer;改版本 / 打 tag |
 | `open-unsigned-app.sh` | 打开 ad-hoc(未真实签名)产物:去 Gatekeeper 隔离 + 启动(发布包附带) |
 
 ## 常用
 
 ```bash
+tools/repo-check.sh                         # 仓库自检(不需要 Xcode)
 tools/doctor.sh                             # 环境体检
-tools/run-sim.sh --screenshot /tmp/a.png    # 一条命令跑 iOS 模拟器
+tools/run-sim.sh --screenshot /tmp/a.png    # 一条命令跑 iOS 模拟器(自动挑设备)
+tools/run-sim.sh --udid <UDID>              # 指定设备(同名多 runtime 时最稳)
+tools/test-template.sh                      # 模板冒烟
+tools/handoff-app.sh EnvDemo --to ../EnvDemo   # 交付干跑(加 --write 才写)
 tools/test-ios.sh                           # 单测跑在 iOS 运行时(不需要工程文件)
 tools/ui-scan.sh --input /tmp/a.png         # OCR 文本验收
 tools/ui-assert.sh --contains "arm64"        # 文本断言(可进 CI)
@@ -44,6 +51,10 @@ tools/release.sh --dry-run                  # 看下一个版本号
 
 ## 约定
 
+- **仓库自检与工具链自检分开**:`repo-check.sh` 不需要 Xcode(可在任何机器/CI 上跑),
+  `doctor.sh` 查本机工具链。`verify-all.sh` 先跑前者。
+- **模拟器设备**:统一走 `simctl_resolve_device`(支持 UDID / 精确名 / 名字子串 / 自动)。
+  自动优先级:已启动 iPhone > `iPhone 17` > 最新 runtime;不要再手写 `grep | head -1`。
 - **多应用**:应用都在 `apps/<Name>/`(`new-app.sh` 生成)。`build.sh` / `test.sh` / `verify-all.sh`
   无参 = 遍历全部;`bundle.sh` / `run-sim.sh` 在只有一个应用时自动选,多个则必须 `--app <Name>`。
   新建应用 / 多应用约定见 [docs/02](../docs/02-swiftpm-project-conventions.md#6-新建应用多应用支持)。

@@ -26,7 +26,7 @@ if [ "$arch" = "arm64" ]; then c_ok "架构" "arm64"; else c_bad "架构" "$arch
 dev="$(xcode-select -p 2>/dev/null || true)"
 case "$dev" in
   */Xcode*.app/Contents/Developer) c_ok "xcode-select" "$dev" ;;
-  *CommandLineTools*) c_bad "xcode-select" "$dev(仍是 CLT;先 xcodes select 27.0)" ;;
+  *CommandLineTools*) c_bad "xcode-select" "$dev(仍是 CLT;先 xcodes select 27.2)" ;;
   *) c_bad "xcode-select" "${dev:-未设置}" ;;
 esac
 

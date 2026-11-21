@@ -1,0 +1,5 @@
+# 模板自带的 UI 文本断言(截图 → 原生 OCR,见 docs/06)
+#
+# 新应用生成后请改成你自己 UI 的稳定文本:OCR 有损,优先 ASCII、短串。
++Hello
++template
