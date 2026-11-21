@@ -24,21 +24,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 选择 Xcode 27(优先 27.0 稳定版)
-        run: |
-          shopt -s nullglob
-          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
-          pick=""
-          for p in "${all[@]}"; do
-            case "$p" in *27.0*) pick="$p"; break;; esac
-          done
-          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
-            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
-          fi
-          if [ -n "$pick" ]; then
-            sudo xcode-select -s "$pick/Contents/Developer"
-          fi
-          xcodebuild -version
+      - name: 选择 Xcode 27.2
+        uses: ./.github/actions/select-xcode
+        with:
+          version: "27.2"
 
       - name: 构建 macOS EnvDemo
         run: |
@@ -115,21 +104,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 选择 Xcode 27(优先 27.0 稳定版)
-        run: |
-          shopt -s nullglob
-          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
-          pick=""
-          for p in "${all[@]}"; do
-            case "$p" in *27.0*) pick="$p"; break;; esac
-          done
-          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
-            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
-          fi
-          if [ -n "$pick" ]; then
-            sudo xcode-select -s "$pick/Contents/Developer"
-          fi
-          xcodebuild -version
+      - name: 选择 Xcode 27.2
+        uses: ./.github/actions/select-xcode
+        with:
+          version: "27.2"
 
       - name: 构建并打成待处理 zip
         run: |

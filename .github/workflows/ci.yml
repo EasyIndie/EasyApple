@@ -47,40 +47,24 @@ jobs:
         run: |
           base="${{ github.event.pull_request.base.sha }}"
           head="${{ github.event.pull_request.head.sha }}"
-          bad=0
-          while IFS= read -r msg; do
-            [ -n "$msg" ] || continue
-            if ! printf '%s' "$msg" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: '; then
-              echo "不规范: $msg"; bad=1
-            fi
-          done < <(git log --format=%s "$base..$head")
-          [ "$bad" -eq 0 ] || { echo "存在不符合 Conventional Commits 的提交"; exit 1; }
+          bash tools/release.sh --check-commits "$base..$head"
 
-      - name: 选择 Xcode 27(优先 27.0 稳定版)
-        run: |
-          echo "可用 Xcode:"; ls -d /Applications/Xcode*.app || true
-          shopt -s nullglob
-          all=(/Applications/Xcode_27*.app /Applications/Xcode-27*.app)
-          pick=""
-          for p in "${all[@]}"; do
-            case "$p" in *27.0*) pick="$p"; break;; esac
-          done
-          if [ -z "$pick" ] && [ ${#all[@]} -gt 0 ]; then
-            pick="$(printf '%s\n' "${all[@]}" | sort -V | tail -1)"
-          fi
-          if [ -n "$pick" ]; then
-            echo "选择: $pick"
-            sudo xcode-select -s "$pick/Contents/Developer"
-          else
-            echo "未找到 Xcode 27,使用默认"
-          fi
-          xcodebuild -version
+      - name: 仓库自检(不需要 Xcode)
+        run: bash tools/repo-check.sh
+
+      - name: 选择 Xcode 27.2
+        uses: ./.github/actions/select-xcode
+        with:
+          version: "27.2"
 
       - name: doctor
         run: bash tools/doctor.sh
 
       - name: 版本一致性
         run: bash tools/sync-version.sh --check
+
+      - name: 模板冒烟(template/ 不参与常规构建,这里单独验)
+        run: bash tools/test-template.sh
 
       - name: 构建
         run: bash tools/build.sh

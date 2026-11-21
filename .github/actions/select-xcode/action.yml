@@ -1,0 +1,51 @@
+name: Select Xcode
+description: >-
+  选择 GitHub macOS runner 上的 Xcode:优先指定版本,其次同系列最高稳定版(排除 beta)。
+  集中一处,避免每个 workflow 各抄一份、漂移成不同版本。
+
+inputs:
+  version:
+    description: 首选版本前缀(默认与本地实测一致)
+    required: false
+    default: "27.2"
+  series:
+    description: Xcode 大版本系列
+    required: false
+    default: "27"
+
+runs:
+  using: composite
+  steps:
+    - name: 选择并验证 Xcode
+      shell: bash
+      env:
+        WANT: ${{ inputs.version }}
+        SERIES: ${{ inputs.series }}
+      run: |
+        set -euo pipefail
+        echo "可用 Xcode:"; ls -d /Applications/Xcode*.app 2>/dev/null || true
+        shopt -s nullglob
+        all=(/Applications/Xcode_"${SERIES}"*.app /Applications/Xcode-"${SERIES}"*.app)
+        stable=()
+        for p in "${all[@]}"; do
+          case "$p" in *[Bb]eta*) continue ;; esac
+          stable+=("$p")
+        done
+        [ ${#stable[@]} -gt 0 ] || {
+          echo "::error::runner 上没有 Xcode ${SERIES} 稳定版"
+          exit 1
+        }
+
+        pick=""
+        # 1) 精确/前缀命中首选版本
+        for p in "${stable[@]}"; do
+          case "$p" in *"$WANT"*) pick="$p"; break ;; esac
+        done
+        # 2) 退而取同系列最高稳定版
+        if [ -z "$pick" ]; then
+          pick="$(printf '%s\n' "${stable[@]}" | sort -V | tail -1)"
+        fi
+
+        echo "选择: $pick"
+        sudo xcode-select -s "$pick/Contents/Developer"
+        xcodebuild -version
